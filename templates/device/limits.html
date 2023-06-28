@@ -13,17 +13,17 @@
           <div class="col-sm-3 col-md-3">
             <label for="{{p}}_min">Min</label>
             {% if get_object(limits_, "parameter", p) == None %}
-              <input type="number" name="{{p}}_new_min" id="{{p}}_min" placeholder="Not set" step="0.01"></input>
+              <input type="number" name="{{p}}_new_min" id="{{p}}_min" placeholder="Not set" step="0.001"></input>
             {% else %}
-              <input type="number" name="{{p}}_new_min" id="{{p}}_min" value="{{get_object(limits_, "parameter", p).min}}" step="0.01"></input>
+              <input type="number" name="{{p}}_new_min" id="{{p}}_min" value="{{get_object(limits_, "parameter", p).min}}" step="0.001"></input>
             {% endif %}
           </div>
           <div class="col-sm-3 col-md-3">
             <label for="{{p}}_max">Max</label>
             {% if get_object(limits_, "parameter", p) == None %}
-              <input type="number" name="{{p}}_new_max" id="{{p}}_max" placeholder="Not set" step="0.01"></input>
+              <input type="number" name="{{p}}_new_max" id="{{p}}_max" placeholder="Not set" step="0.001"></input>
             {% else %}
-              <input type="number" name="{{p}}_new_max" id="{{p}}_max" value="{{get_object(limits_, "parameter", p).max}}" step="0.01"></input>
+              <input type="number" name="{{p}}_new_max" id="{{p}}_max" value="{{get_object(limits_, "parameter", p).max}}" step="0.001"></input>
             {% endif %}
             <p class="error-message" style="color: red; display: none;"></p>
           </div>
@@ -32,9 +32,12 @@
       {% endfor %}
       <div class="row">
         <div class="col s12">
-          <button type="submit" formaction="{{ url_for('limits', eui=eui_) }}" id="submitBtn" disabled>
+          <button type="submit" formaction="{{ url_for('limits', eui=eui_) }}" id="submitBtn" disabled class="btn btn-success"">
             Save
           </button>
+          <a type="button" href="{{ url_for('devicegraph', dev=eui_) }}" class="btn btn-secondary">
+            Cancel
+          </a>
         </div>
       </div>
     </form>
