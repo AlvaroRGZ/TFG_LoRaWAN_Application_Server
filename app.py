@@ -49,6 +49,12 @@ def is_json(myjson):
     return False
   return True
 
+def get_object(vector, campo, valor):
+  for obj in vector:
+    if obj[campo] == valor:
+      return obj
+  return None
+
 @app.route('/')
 def index():
   
@@ -179,8 +185,6 @@ def devicegraph(dev):
       "altitude": device_data[0][4]
     }
 
-  cur.close()
-  conn.close()
 
   # Get last uplink data
   uplink = data[0]
@@ -211,13 +215,25 @@ def devicegraph(dev):
     df[variable] = df[variable].astype(float)
     # Seleccion y construye el grafico
     fig = px.line(df, x = 'rec_date', y = variable, color_discrete_sequence=px.colors.qualitative.Plotly, markers=True)
+    # Show the limits if they exists
+    fig.add_shape(type='line',
+              x0=df['rec_date'].min(),
+              x1=df['rec_date'].max(),
+              y0=2.99,
+              y1=2.99,
+              line=dict(color='red', dash='dash'),
+              name='Umbral')
 
+    fig.update_layout(showlegend=True)
     graphs.append(json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder))
   header = dev
   description = """
   Datos recibidos por el dispositivo con EUI: {}
   """.format(dev)
 
+  cur.close()
+  conn.close()
+  
   return render_template('graph.html', graphJSON=graphs,
                          description=description,
                          uplink_ = uplink, dev_info_ = dev_data,
@@ -291,6 +307,55 @@ def modify_device(eui):
     return render_template("modify_device.html", dev_ = dev, res_=res)
   else:
     return render_template("error.html", errorMessage="Error registrando dispositivo")
+
+@app.route('/limits/<eui>', methods=('GET', 'POST'))
+def limits(eui):
+  if request.method == 'GET':
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Get device information
+    cur.execute('SELECT name FROM device WHERE eui=\'{}\';'.format(eui))
+    name = cur.fetchall()
+
+    # Get limits information
+    cur.execute('SELECT parameter, min, max FROM device_limits WHERE eui=\'{}\';'.format(eui))
+    dev_limits = cur.fetchall()
+
+    # Get device atributes
+    cur.execute('SELECT obj FROM data WHERE eui=\'{}\';'.format(eui))
+    parameters = cur.fetchall()
+
+    ## Convert Query Result in dataframe
+    dump = json.dumps(parameters[0], default=serialize_datetime)
+    dict1 = json.loads(dump)
+
+    parameter_names = []
+    for key, value in dict1[0].items():
+      parameter_names.append(key)
+    # From tuple to struct
+    limits = []
+    print(parameter_names)
+    for limit in dev_limits:
+      l = {
+        "parameter": limit[0],
+        "min": limit[1],
+        "max": limit[2]
+      }
+      limits.append(l)
+
+    print(limits)
+    cur.close()
+    conn.close()
+    return render_template("limits.html", limits_ = limits, parameters_ = parameter_names,
+                            eui_ = eui[0][0], name_ = name[0][0], get_object = get_object)
+  
+  elif request.method == 'POST':
+
+    return redirect(url_for('devicegraph', dev=eui_))
+  else:
+    return render_template("error.html", errorMessage="Error registrando dispositivo")
+
 
 @app.route('/get_desc')
 def get_desc():

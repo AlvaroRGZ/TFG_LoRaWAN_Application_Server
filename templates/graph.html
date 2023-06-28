@@ -23,8 +23,15 @@
           </tr>
           {% endfor %}
         </table>
-        <button type="button" class="btn btn-info">Modify data</button>
-        <button type="button" class="btn btn-info">View raw data</button>
+        <a type="button" href="{{ url_for('modify_device', eui=dev_info_['eui']) }}" class="btn btn-info">
+          Modify data
+        </a>
+        <a type="button" href="{{ url_for('device', dev=dev_info_['eui']) }}" class="btn btn-info">
+          View raw data
+        </a>
+        <a type="button" href="{{ url_for('limits', eui=dev_info_['eui']) }}" class="btn btn-info">
+          Set limits
+        </a>
       </div>
       <div class="col-sm-12 col-md-3">
         <div id="map" class="map"></div>
