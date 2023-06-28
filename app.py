@@ -216,13 +216,27 @@ def devicegraph(dev):
     # Seleccion y construye el grafico
     fig = px.line(df, x = 'rec_date', y = variable, color_discrete_sequence=px.colors.qualitative.Plotly, markers=True)
     # Show the limits if they exists
-    fig.add_shape(type='line',
-              x0=df['rec_date'].min(),
-              x1=df['rec_date'].max(),
-              y0=2.99,
-              y1=2.99,
-              line=dict(color='red', dash='dash'),
-              name='Umbral')
+    # Obtener el limite min y max del dispositivo
+    cur.execute('SELECT min, max '
+                'FROM device_limits '
+                "WHERE eui = \'{}\' AND parameter = \'{}\'".format(dev, variable))
+    min_max = cur.fetchall()
+    if (min_max and min_max[0][0] is not None):
+      fig.add_shape(type='line',
+                x0=df['rec_date'].min(),
+                x1=df['rec_date'].max(),
+                y0=min_max[0][0],
+                y1=min_max[0][0],
+                line=dict(color='red', dash='dash'),
+                name='min')
+    if (min_max and min_max[0][1] is not None):
+      fig.add_shape(type='line',
+                x0=df['rec_date'].min(),
+                x1=df['rec_date'].max(),
+                y0=min_max[0][1],
+                y1=min_max[0][1],
+                line=dict(color='green', dash='dash'),
+                name='max')
 
     fig.update_layout(showlegend=True)
     graphs.append(json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder))
