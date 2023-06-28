@@ -348,11 +348,50 @@ def limits(eui):
     cur.close()
     conn.close()
     return render_template("limits.html", limits_ = limits, parameters_ = parameter_names,
-                            eui_ = eui[0][0], name_ = name[0][0], get_object = get_object)
+                            eui_ = eui, name_ = name[0][0], get_object = get_object)
   
   elif request.method == 'POST':
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-    return redirect(url_for('devicegraph', dev=eui_))
+    # Get device parameters
+    cur.execute('SELECT obj FROM data WHERE eui=\'{}\';'.format(eui))
+    parameters = cur.fetchall()
+
+    # Convert Query Result to dataframe
+    dump = json.dumps(parameters[0], default=serialize_datetime)
+    dict1 = json.loads(dump)
+
+    parameter_names = []
+    for key, value in dict1[0].items():
+        parameter_names.append(key)
+
+    form_items = list(request.form.items())
+    for p in parameter_names:
+        name = request.form.get(f"{p}_name")
+        mind = request.form.get(f"{p}_new_min")
+        maxd = request.form.get(f"{p}_new_max")
+        print(name, mind, maxd)
+        print("------------------------")
+
+        if mind is not None or maxd is not None:
+            # Check if the record already exists
+            cur.execute("SELECT COUNT(*) FROM device_limits WHERE eui = %s AND parameter = %s;", (eui, p))
+            count = cur.fetchone()[0]
+
+            if count > 0:
+                # Update the existing record
+                cur.execute("UPDATE device_limits SET min = %s, max = %s WHERE eui = %s AND parameter = %s;",
+                            (mind or None, maxd or None, eui, p))
+            else:
+                # Insert a new record
+                cur.execute("INSERT INTO device_limits (eui, parameter, min, max) VALUES (%s, %s, %s, %s);",
+                            (eui, p, mind or None, maxd or None))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+    return redirect(url_for('devicegraph', dev=eui))
   else:
     return render_template("error.html", errorMessage="Error registrando dispositivo")
 

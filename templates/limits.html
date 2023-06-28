@@ -5,12 +5,6 @@
   <div class="custom-container">
     <h1>SET LIMITS FOR DEVICE: {{name_}}</h1>
     <form method="post" id="lim">
-      <label for="parameter">Parametro</label>
-      <select name="parameter" id="parameter">
-        {% for param in parameters_ %}
-          <option>{{param}}</option>
-        {% endfor %}
-      </select>
       {% for p in parameters_ %}
         <div class="row">
           <div class="col-sm-3 col-md-3">
@@ -19,19 +13,20 @@
           <div class="col-sm-3 col-md-3">
             <label for="min">Min</label>
             {% if get_object(limits_, "parameter", p) == None %}
-              <input type="number" name="new_min" value="" placeholder="Not set"></input>
+              <input type="number" name="{{p}}_new_min" placeholder="Not set"></input>
             {% else %}
-              <input type="number" name="new_min" value="{{get_object(limits_, "parameter", p).min}}"></input>
+              <input type="number" name="{{p}}_new_min" value="{{get_object(limits_, "parameter", p).min}}"></input>
             {% endif %}
           </div>
           <div class="col-sm-3 col-md-3">
             <label for="max">Max</label>
             {% if get_object(limits_, "parameter", p) == None %}
-              <input type="number" name="new_max" value="" placeholder="Not set"></input>
+              <input type="number" name="{{p}}_new_max" placeholder="Not set"></input>
             {% else %}
-              <input type="number" name="new_max" value="{{get_object(limits_, "parameter", p).max}}"></input>
+              <input type="number" name="{{p}}_new_max" value="{{get_object(limits_, "parameter", p).max}}"></input>
             {% endif %}
           </div>
+          <input type="hidden" type="text" name="{{p}}_name" value="{{p}}"></input>
         </div>
       {% endfor %}
       <div class="row">
