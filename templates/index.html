@@ -27,7 +27,7 @@
       {% if devices_ %}
       {% for dev in devices_ %}
       <div class='device'>
-        <a class="font-30" href="{{ url_for('device', dev=dev[0]) }}">{{ dev[1] }}</a>
+        <a class="font-30" href="{{ url_for('devicegraph', dev=dev[0]) }}">{{ dev[1] }}</a>
         <p class="font-25">eui:  {{ dev[0] }}</p>
       </div>
       {% endfor %}

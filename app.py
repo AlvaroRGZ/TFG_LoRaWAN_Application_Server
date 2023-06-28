@@ -95,7 +95,7 @@ def device(dev):
 
   cur.close()
   conn.close()
-  return render_template("device.html",
+  return render_template("device/device.html",
                          dev_info_ = dev_info,
                          dev_data_ = dev_data,
                          uplink_objs_ = uplink_objs)
@@ -138,7 +138,7 @@ def register():
                                                                 request["altitude"]))
     cur.close()
     conn.close()
-    return render_template("register_device.html",
+    return render_template("device/register_device.html",
                             errorMessage = "Registered new device named: {}".format(request["name"]))
   elif request.method == 'GET':
     conn = get_db_connection()
@@ -150,7 +150,7 @@ def register():
 
     cur.close()
     conn.close()
-    return render_template("register_device.html", gateways = gateway_names)
+    return render_template("device/register_device.html", gateways = gateway_names)
   else:
     return render_template("error.html", errorMessage="Error registrando dispositivo")
 
@@ -248,7 +248,7 @@ def devicegraph(dev):
   cur.close()
   conn.close()
   
-  return render_template('graph.html', graphJSON=graphs,
+  return render_template('device/graph.html', graphJSON=graphs,
                          description=description,
                          uplink_ = uplink, dev_info_ = dev_data,
                          headers_=yData)
@@ -318,7 +318,7 @@ def modify_device(eui):
     res = ""
     cur.close()
     conn.close()
-    return render_template("modify_device.html", dev_ = dev, res_=res)
+    return render_template("device/modify_device.html", dev_ = dev, res_=res)
   else:
     return render_template("error.html", errorMessage="Error registrando dispositivo")
 
@@ -361,7 +361,7 @@ def limits(eui):
     print(limits)
     cur.close()
     conn.close()
-    return render_template("limits.html", limits_ = limits, parameters_ = parameter_names,
+    return render_template("device/limits.html", limits_ = limits, parameters_ = parameter_names,
                             eui_ = eui, name_ = name[0][0], get_object = get_object)
   
   elif request.method == 'POST':
@@ -408,7 +408,7 @@ def limits(eui):
     conn.commit()
     cur.close()
     conn.close()
-    return redirect(url_for('devicegraph', dev=eui))
+    return redirect(url_for('device/devicegraph', dev=eui))
   else:
     return render_template("error.html", errorMessage="Error registrando dispositivo")
 
