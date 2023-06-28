@@ -408,7 +408,7 @@ def limits(eui):
     conn.commit()
     cur.close()
     conn.close()
-    return redirect(url_for('device/devicegraph', dev=eui))
+    return redirect(url_for('devicegraph', dev=eui))
   else:
     return render_template("error.html", errorMessage="Error registrando dispositivo")
 
