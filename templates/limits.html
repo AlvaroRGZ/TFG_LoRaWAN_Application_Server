@@ -11,27 +11,28 @@
             <p>{{p}}</p>
           </div>        
           <div class="col-sm-3 col-md-3">
-            <label for="min">Min</label>
+            <label for="{{p}}_min">Min</label>
             {% if get_object(limits_, "parameter", p) == None %}
-              <input type="number" name="{{p}}_new_min" placeholder="Not set"></input>
+              <input type="number" name="{{p}}_new_min" id="{{p}}_min" placeholder="Not set" step="0.01"></input>
             {% else %}
-              <input type="number" name="{{p}}_new_min" value="{{get_object(limits_, "parameter", p).min}}"></input>
+              <input type="number" name="{{p}}_new_min" id="{{p}}_min" value="{{get_object(limits_, "parameter", p).min}}" step="0.01"></input>
             {% endif %}
           </div>
           <div class="col-sm-3 col-md-3">
-            <label for="max">Max</label>
+            <label for="{{p}}_max">Max</label>
             {% if get_object(limits_, "parameter", p) == None %}
-              <input type="number" name="{{p}}_new_max" placeholder="Not set"></input>
+              <input type="number" name="{{p}}_new_max" id="{{p}}_max" placeholder="Not set" step="0.01"></input>
             {% else %}
-              <input type="number" name="{{p}}_new_max" value="{{get_object(limits_, "parameter", p).max}}"></input>
+              <input type="number" name="{{p}}_new_max" id="{{p}}_max" value="{{get_object(limits_, "parameter", p).max}}" step="0.01"></input>
             {% endif %}
+            <p class="error-message" style="color: red; display: none;"></p>
           </div>
           <input type="hidden" type="text" name="{{p}}_name" value="{{p}}"></input>
         </div>
       {% endfor %}
       <div class="row">
         <div class="col s12">
-          <button type="submit" formaction="{{ url_for('limits', eui=eui_) }}">
+          <button type="submit" formaction="{{ url_for('limits', eui=eui_) }}" id="submitBtn" disabled>
             Save
           </button>
         </div>
@@ -39,4 +40,51 @@
     </form>
   </div>
 
+  <script type="text/javascript">
+    // Get the form element and input fields
+    const form = document.getElementById('lim');
+    const minInputs = document.querySelectorAll('input[name$="_new_min"]');
+    const maxInputs = document.querySelectorAll('input[name$="_new_max"]');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Add event listeners to each input field
+    minInputs.forEach(minInput => {
+      minInput.addEventListener('input', validateForm);
+    });
+
+    maxInputs.forEach(maxInput => {
+      maxInput.addEventListener('input', validateForm);
+    });
+
+    // Function to validate the form and enable/disable the submit button
+    function validateForm() {
+      let valid = true;
+
+      // Check if max value is greater than min value for each parameter
+      for (let i = 0; i < minInputs.length; i++) {
+        const minInput = minInputs[i];
+        const maxInput = maxInputs[i];
+        const minVal = parseFloat(minInput.value);
+        const maxVal = parseFloat(maxInput.value);
+
+        // Ignore cases where min or max value is null
+        if (!minVal || !maxVal) {
+          continue;
+        }
+
+        if (minVal > maxVal) {
+          valid = false;
+          maxInput.nextElementSibling.textContent = 'Min value should be less than Max value.';
+          maxInput.nextElementSibling.style.display = 'block';
+        } else {
+          maxInput.nextElementSibling.style.display = 'none';
+        }
+      }
+
+      // Enable or disable the submit button based on validity
+      submitBtn.disabled = !valid;
+    }
+    // Enable the submit button initially
+    submitBtn.disabled = false;
+  </script>
 {% endblock %}
