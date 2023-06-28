@@ -1,0 +1,9 @@
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/server.sh
+Type=oneshot
+RemainAfterExit=true
+
+[Install]
+WantedBy=default.target

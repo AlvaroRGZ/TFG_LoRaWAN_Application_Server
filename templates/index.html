@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Inicio{% endblock %}
+{% block page_title %}{% endblock %}
+
+{% block content %}
+<div class="custom-container">
+  <div class="row">
+    <div class="col">
+      <p class="center-align blue">Gateways</p>
+      {% if gateways_ %}
+        {% for gat in gateways_ %}
+          <div class='gateway'>
+            <a class="font-30" href="{{ url_for('gateway', eui=gat[0]) }}">{{ gat[1] }}</a>
+            <p class="font-25">eui:  {{ gat[0] }}</p>
+          </div>
+        {%endfor%}
+      {% else %}
+        <p class="errordevice">No hay gateways registrados</p>
+      {% endif %}
+    </div>
+    <div class="col">
+      <p class="center-align blue">Network Map</p>
+      <div id="map" class="map"></div>
+    </div>
+    <div class="col">
+      <p class="center-align blue">Devices</p>
+      {% if devices_ %}
+      {% for dev in devices_ %}
+      <div class='device'>
+        <a class="font-30" href="{{ url_for('device', dev=dev[0]) }}">{{ dev[1] }}</a>
+        <p class="font-25">eui:  {{ dev[0] }}</p>
+      </div>
+      {% endfor %}
+      {% else %}
+      <p class="errordevice">No hay dispositivos registrados</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+  
+  <!-- Include the Mapbox GL JS library -->
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.css" rel="stylesheet" />
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.js"></script>
+  <!-- MAPBOX MAP-->
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYWx2YXJvcmciLCJhIjoiY2xpdW1iNGExMDE3YzNxcWgyd3ZkMGQ4aiJ9.AgQTU3uOI4KM4jHn1kN9cw';
+    
+    // Initialize the map
+    var map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/streets-v11'
+    });
+    
+    // To calculate devices centroid
+    var sumLat = 0;
+    var sumLng = 0;
+    var bounds = new mapboxgl.LngLatBounds();
+    // Add markers for device locations
+    var devicesData = {{ devices_ | tojson }};
+    devicesData.forEach(function(device) {
+      var marker = new mapboxgl.Marker()
+      .setLngLat([device[3], device[2]])
+      .setPopup(new mapboxgl.Popup().setHTML('<b>' + device[1] + '</b><br>' + device[0] + '<br> Altitude: ' + device[4]))
+      .addTo(map);
+      sumLat += device[2];
+      sumLng += device[3];
+      bounds.extend([device[3], device[2]]);
+    });
+    
+    var gatewaysData = {{ gateways_ | tojson }};
+    gatewaysData.forEach(function(gateway) {
+      var marker = new mapboxgl.Marker({ color: '#FF0000' })
+      .setLngLat([gateway[3], gateway[2]])
+      .setPopup(new mapboxgl.Popup().setHTML('<b>' + gateway[1] + '</b><br>' + gateway[0]))
+      .addTo(map);
+      sumLat += gateway[2];
+      sumLng += gateway[3];
+      bounds.extend([gateway[3], gateway[2]]);
+    });
+
+    // Calculate centroid
+    var kElements = devicesData.length + gatewaysData.length
+    var centroidLat = sumLat / kElements;
+    var centroidLng = sumLng / kElements;
+    // Set the centroid as the center
+    map.setCenter([centroidLng, centroidLat]);
+    map.fitBounds(bounds, { padding: 50 });
+  
+  </script>
+
+{% endblock %}

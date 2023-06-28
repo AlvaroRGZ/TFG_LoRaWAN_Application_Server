@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    {% block css %}
+      {{bootstrap.load_css()}}
+    {% endblock%}
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+    <style>
+      .menu {
+        background-color: #4fd0fe;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .menu a {
+        color: #000000;
+        font-size: 3em;
+        margin-left: 50px;
+        text-decoration: none;
+        text-align: center;
+      }
+
+ 
+      .custom-container {
+        width: 80%;
+        padding-right: 5%;
+        padding-left: 5%;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .device {
+        padding: 20px;
+        margin: 10px;
+        background-color: #b4feff;
+        border: 2px solid black;
+      }
+      
+      .gateway {
+        padding: 20px;
+        margin: 10px;
+        background-color: hsl(266, 98%, 84%);
+        border: 2px solid black;
+      }
+
+      .font-30 {
+        font-size: 30px;
+      }
+
+      .font-25 {
+        font-size: 25px;
+      }
+      
+      .map {
+        border: 2px solid black;
+        height: 300px;
+      }
+      
+      .record {
+        padding: 5px;
+        background-color: #a0ff9d;
+        border: 2px solid black;
+        border-radius: 15%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .record-cell {
+        display: inline-block;
+        width: 100%; /* Set the initial width to 100% */
+        box-sizing: border-box; /* Include padding and border in the width calculation */
+        word-wrap: break-word; /* Allow words to break and wrap within the cell */
+      }
+
+      /* Add this class to the largest cell using JavaScript or manually */
+      .record-cell-largest {
+        width: fit-content; /* Set the width to fit the content for the largest cell */
+        white-space: nowrap; /* Prevent word wrapping */
+      }
+
+      .record p {
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        flex-grow: 1;
+      }
+
+      .name {
+        font-size: 20px;
+        font-weight:100;
+      }
+
+      .delete {
+        display: grid;
+        place-items: center;
+      }
+
+      .delete .deleteddevice {
+        font-size: 30px;
+        color: lawngreen;
+      }
+
+      .delete .errordevice {
+        font-size: 30px;
+        color: rgb(252, 0, 0);
+      }
+
+      .review {
+        margin-left: 50px;
+        font-size: 20px;
+      }
+
+      .row {
+        background: #f6f6f6;
+        border: 1px solid #ccc;
+        overflow: hidden;
+        padding: 10px;
+      }
+
+      .col {
+        float: left;
+        width: 33%
+      }
+
+      table, th, td {
+        border: 1px solid;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="menu">
+      <a href="{{ url_for('index') }}" style="padding-left: 5%;">Home</a>
+      <b>{% block page_title %}{% endblock %}</b>
+      <a href="{{ url_for('index') }}" style="padding-right: 5%;">Contact</a>
+    </nav>
+    <hr>
+    <div class="content" >
+      {% block content %}{% endblock %}
+    </div>
+  </body>
+</html>

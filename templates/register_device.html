@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="container">
+    <h1>REGISTER DEVICE</h1>
+    <form method="post">
+      <div class="col">
+        <p>Datos cliente</p>
+        <p>
+          <label for="name">Device name</label>
+          <input type="text" name="name"
+            placeholder="">
+          </input>
+        </p>
+        <p>
+          <label for="eui">Device EUI</label>
+          <input type="text" name="eui"
+            placeholder="">
+          </input>
+        </p>
+        {% if gateways %}
+          <label for="gateway">Gateway</label>
+          <select name="gateway">
+            {% for gw in gateways %} 
+              <option for="gateway" value="{{gw}}">{{gw}}</option>
+            {%endfor%}
+          </select>
+        {% else %}
+          <p>No hay gateways</p>
+        {% endif %}
+        <p>
+          <button type="submit">Submit</button>
+        </p>
+      </div>
+    </form>
+  </div>
+{% endblock %}

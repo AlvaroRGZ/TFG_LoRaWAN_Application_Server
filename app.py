@@ -1,0 +1,335 @@
+import os
+import sys
+
+import psycopg2
+from flask import Flask, render_template, request, url_for, redirect, flash
+from flask_bootstrap import Bootstrap4
+import json
+import paho.mqtt.client as mqtt
+
+# Para realizar las graficas
+import pandas as pd
+
+import plotly
+import plotly.express as px
+import datetime
+
+# Para mostrar mapas
+import plotly.graph_objects as go
+mapbox_access_token = open(".mapbox_token").read()
+
+# Para crear mapas
+# import geopandas as gpd
+
+import requests
+
+#import grpc
+#from chirpstack_api.as_pb.external import api
+
+# Definimos la cola en la que se almacenaran los datos recibidos
+import queue as queue
+q=queue.Queue()
+
+app = Flask(__name__)
+
+bootstrap = Bootstrap4(app)
+
+bbdd_host = 'localhost'
+def get_db_connection():
+  conn = psycopg2.connect(host='localhost',
+        database = 'app',
+        user = 'admin',password = 'passwd',
+        port=5432)
+  return conn
+
+def is_json(myjson):
+  try:
+    json.loads(myjson)
+  except ValueError as e:
+    return False
+  return True
+
+@app.route('/')
+def index():
+  
+  conn = get_db_connection()
+  cur = conn.cursor()
+
+  cur.execute('SELECT eui, name, latitude, longitude, altitude FROM device;')
+  devices = cur.fetchall()
+
+  cur.execute('SELECT eui, name, latitude, longitude, altitude FROM gateway;')
+  gateways = cur.fetchall()
+  cur.close()
+  conn.close()
+
+  return render_template('index.html', devices_ = devices, gateways_ = gateways)
+
+@app.route('/device/<dev>')
+def device(dev):
+  conn = get_db_connection()
+  cur = conn.cursor()
+
+  # Get device information
+  cur.execute('SELECT * '
+              'FROM device '
+              'WHERE eui = \'{}\''.format(dev))
+  dev_info = cur.fetchall()
+
+  # Get last 10 device uplinks
+  cur.execute('SELECT * '
+              'FROM data '
+              "WHERE eui = \'{}\'".format(dev) + ' ORDER BY rec_date DESC LIMIT 10 ')
+  dev_data = cur.fetchall()
+
+  # Construct the obj json
+  uplink_objs = []
+  for uplink in dev_data:
+    uplink_objs.append(uplink[3])
+
+  cur.close()
+  conn.close()
+  return render_template("device.html",
+                         dev_info_ = dev_info,
+                         dev_data_ = dev_data,
+                         uplink_objs_ = uplink_objs)
+
+@app.route('/gateway/<eui>')
+def gateway(eui):
+  conn = get_db_connection()
+  cur = conn.cursor()
+
+  # Get gateway information
+  cur.execute('SELECT * '
+              'FROM gateway '
+              'WHERE eui = \'{}\''.format(eui))
+  gat_info = cur.fetchall()
+
+  cur.close()
+  conn.close()
+  return render_template("gateway.html",
+                         gat_info_ = gat_info)
+
+@app.route('/register_device', methods=('GET', 'POST'))
+def register():
+  if request.method == 'POST':
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Check if device already exits, creates a new one if not
+    cur.execute('SELECT * '
+                'FROM device '
+                'WHERE eui = \'{}\''.format(request["eui"]))
+    device = cur.fetchall()
+    if device != None:
+      return render_template("error.html", errorMessage = "Device already exits")
+    else:
+      cur.execute('INSERT INTO device VALUES ('
+                  '\'{}\',\'{}\',\'{}\',\'{}\',\'{}\');'.format(request["eui"],
+                                                                request["name"],
+                                                                request["latitude"],
+                                                                request["longitude"],
+                                                                request["altitude"]))
+    cur.close()
+    conn.close()
+    return render_template("register_device.html",
+                            errorMessage = "Registered new device named: {}".format(request["name"]))
+  elif request.method == 'GET':
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Get device information
+    cur.execute('SELECT name FROM gateway;')
+    gateway_names = cur.fetchall()
+
+    cur.close()
+    conn.close()
+    return render_template("register_device.html", gateways = gateway_names)
+  else:
+    return render_template("error.html", errorMessage="Error registrando dispositivo")
+
+# Define a custom function to serialize datetime objects
+def serialize_datetime(obj):
+  if isinstance(obj, datetime.datetime):
+      return obj.isoformat()
+  raise TypeError("Type not serializable")
+
+# Muestra grafico de interes del dispositivo deseado
+@app.route('/device/<dev>/graph')
+def devicegraph(dev):
+  conn = get_db_connection()
+  cur = conn.cursor()
+
+  # Obtain registered data from device to plot
+  cur.execute('SELECT rec_date, obj '
+              'FROM data '
+              "WHERE eui = \'{}\'".format(dev) + ' ORDER BY rec_date DESC LIMIT 20')
+  data = cur.fetchall()
+
+  # Obtain device information
+  cur.execute('SELECT * '
+              'FROM device '
+              "WHERE eui = \'{}\'".format(dev))
+  device_data = cur.fetchall()
+  dev_data = {
+      "eui": device_data[0][0],
+      "name": device_data[0][1],
+      "latitude": device_data[0][2],
+      "longitude": device_data[0][3],
+      "altitude": device_data[0][4]
+    }
+
+  cur.close()
+  conn.close()
+
+  # Get last uplink data
+  uplink = data[0]
+
+  ## Convert Query Result in dataframe
+  dump = json.dumps(data, default=serialize_datetime)
+  dict1 = json.loads(dump)
+  # 
+  yData = []
+  
+  register = dict(dict1[0][1])
+  #  print(register[0])
+  for key, value in register.items():
+    yData.append(key)
+  dict2 = []
+  for r in dict1:
+    r[1]["rec_date"] = r[0]
+    dict2.append(r[1])
+
+  # Convertir el payload en un dataframe
+  normalized = pd.json_normalize(dict2) 
+
+  # Create dataframe out of the normalized payload
+  df = pd.DataFrame(normalized)
+
+  graphs = []
+  for variable in yData:
+    df[variable] = df[variable].astype(float)
+    # Seleccion y construye el grafico
+    fig = px.line(df, x = 'rec_date', y = variable, color_discrete_sequence=px.colors.qualitative.Plotly, markers=True)
+
+    graphs.append(json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder))
+  header = dev
+  description = """
+  Datos recibidos por el dispositivo con EUI: {}
+  """.format(dev)
+
+  return render_template('graph.html', graphJSON=graphs,
+                         description=description,
+                         uplink_ = uplink, dev_info_ = dev_data,
+                         headers_=yData)
+
+@app.route('/map')
+def map():
+  
+  conn = get_db_connection()
+  cur = conn.cursor()
+
+  cur.execute('SELECT eui, name, latitude, longitude, altitude FROM device;')
+  devices = cur.fetchall()
+
+  cur.execute('SELECT eui, name, latitude, longitude, altitude FROM gateway;')
+  gateways = cur.fetchall()
+  
+  cur.close()
+  conn.close()
+
+  ## TESTING DEVICES MAP
+
+  return render_template('map.html', devices_ = devices, gateways_ = gateways, map_ = fig, MB_TOKEN = mapbox_access_token)
+
+###
+
+@app.route('/modify/<eui>', methods=('GET', 'POST'))
+def modify_device(eui):
+  if request.method == 'POST':
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Check if device already exits, creates a new one if not
+    cur.execute('UPDATE device SET '
+                'eui = \'{}\', '
+                'name = \'{}\', '
+                'latitude = \'{}\', '
+                'longitude = \'{}\', '
+                'altitude = \'{}\' '
+                'WHERE eui = \'{}\''.format(request.form.get("new_eui"),
+                                            request.form.get("new_name"),
+                                            request.form.get("new_latitude"),
+                                            request.form.get("new_longitude"),
+                                            request.form.get("new_altitude"),
+                                            eui))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return redirect(url_for('modify_device', eui=eui))
+  elif request.method == 'GET':
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Get device information
+    cur.execute('SELECT * FROM device WHERE eui=\'{}\';'.format(eui))
+    device = cur.fetchall()
+    #dev = dict(dev)
+    # From tuple to struct
+    dev = {
+      "eui": device[0][0],
+      "name": device[0][1],
+      "latitude": device[0][2],
+      "longitude": device[0][3],
+      "altitude": device[0][4]
+    }
+
+    print(dev)
+    res = ""
+    cur.close()
+    conn.close()
+    return render_template("modify_device.html", dev_ = dev, res_=res)
+  else:
+    return render_template("error.html", errorMessage="Error registrando dispositivo")
+
+@app.route('/get_desc')
+def get_desc():
+
+  api_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5X2lkIjoiOWNiYTg4OGEtNmE2MC00NWM4LWEzYmQtYmZkYWFlNzEzMThhIiwiYXVkIjoiYXMiLCJpc3MiOiJhcyIsIm5iZiI6MTY4NTQ0MTg3NSwic3ViIjoiYXBpX2tleSJ9.6tXTkcGfROpbNhTodDRrbHdc5yhpeMXwNqEAEz_-BSw"
+  
+  server="localhost:8080"
+  eui="a84041a8318279bb"
+  api_url = "http://{}/api/devices/{}".format(server,eui)
+  auth_token = ("authorization", "Bearer %s" % api_token)
+  response = requests.get(api_url, headers=auth_token)
+  print(response.status_code)
+  response.status_code
+  return render_template('get.html', response_ = response.json())
+
+## TESTING
+# Metodo para extender la API de Chirpstack
+@app.route('/rget')
+def call():
+
+  # Configuration.
+
+  # This must point to the API interface.
+  server = "localhost:8080"
+  eui="a84041a8318279bb"
+
+  # The API token (retrieved using the web-interface).
+  api_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5X2lkIjoiOWNiYTg4OGEtNmE2MC00NWM4LWEzYmQtYmZkYWFlNzEzMThhIiwiYXVkIjoiYXMiLCJpc3MiOiJhcyIsIm5iZiI6MTY4NTQ0MTg3NSwic3ViIjoiYXBpX2tleSJ9.6tXTkcGfROpbNhTodDRrbHdc5yhpeMXwNqEAEz_-BSw"
+
+  # Connect without using TLS.
+  channel = grpc.insecure_channel(server)
+
+  # Device-queue API client.
+  client = api.DeviceQueueServiceStub(channel)
+
+  # Define the API key meta-data.
+  auth_token = [("authorization", "Bearer %s" % api_token)]
+
+  # Construct request.
+  req = api.GetDeviceRequest(eui, metadata=auth_token)
+  print(req)
+  return render_template("call.html", dev_info_ = resp)

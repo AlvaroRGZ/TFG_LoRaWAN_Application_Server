@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="container">
+    <div class="row">
+      <div class="col s12">
+        <p class="center-align">{{dev_info_[0][1]}}</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col s5">
+        <p>DATA</p>
+        <table>
+          {% for header in headers %}
+          <tr>
+            <th>{{ header }}</th>
+            <td>{{ dev_info_[0][loop.index0] }}</td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+      <div class="col s5">
+        <p>Last Uplinks</p>
+        <table>
+          <thead>
+            <tr>
+              {% for header in common_data_headers %}
+                <th>{{ header }}</th>
+              {% endfor %}
+              {% for header in dev_data_[0][3] %}
+                <th>{{ header }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in dev_data_ %}
+              <tr>
+                {% for value in [1, 2] %}
+                  <td>{{ row[value] }}</td>
+                {% endfor %}
+                {% for key, value in row[3].items() %}
+                  <td>{{ value }}</td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

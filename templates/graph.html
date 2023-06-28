@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block title %}Graph {{ dev_info_.name }}{% endblock %}
+{% block page_title %}{% endblock %}
+
+{% set headers = ['eui', 'name', 'altitude'] %}
+{% block content %}
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.css" rel="stylesheet" />
+<body>
+  <div class="custom-container">
+    <div class="row">
+      <div class="col-sm-12 text-center">
+        <h3>{{ dev_info_.name }}</h3>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-4 col-md-4">
+        <table class="table table-bordered">
+          {% for header in headers %}
+          <tr>
+            <th>{{ header }}</th>
+            <td>{{ dev_info_[header] }}</td>
+          </tr>
+          {% endfor %}
+        </table>
+        <button type="button" class="btn btn-info">Modify data</button>
+        <button type="button" class="btn btn-info">View raw data</button>
+      </div>
+      <div class="col-sm-12 col-md-3">
+        <div id="map" class="map"></div>
+      </div>
+      <div class="col-sm-12 col-md-5">
+        <div class="row">
+          <h6><b>Last uplink at </b>{{ uplink_[0] }}</h6>
+        </div>
+        <div class="row">
+          {% for head, record in uplink_[1].items() %}
+          <div class="col-sm-4 col-md-3">
+            <div class="record record-cell">
+              <p><b>{{ head }}</b></p>
+              <p>{{ record }}</p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      {% for graph in graphJSON %}
+      <div class="col-sm-12 col-lg-6">
+        <div id="chart{{ loop.index }}" class="chart"></div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</body>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script type="text/javascript">
+  {% for graph in graphJSON %}
+    var plots{{ loop.index }} = {{ graph | safe }};
+    Plotly.plot('chart{{ loop.index }}', plots{{ loop.index }}, {});
+  {% endfor %}
+  // Resize the graphs when the window size changes
+  window.addEventListener('resize', function() {
+    {% for graph in graphJSON %}
+      Plotly.Plots.resize('chart{{ loop.index }}');
+    {% endfor %}
+  });
+
+  // Get all the record cells
+  var recordCells = document.getElementsByClassName('record-cell');
+
+  // Find the maximum width among all the cells
+  var maxWidth = 0;
+  var largestCellIndex = 0;
+  for (var i = 0; i < recordCells.length; i++) {
+    var cellWidth = recordCells[i].offsetWidth;
+    if (cellWidth > maxWidth) {
+      maxWidth = cellWidth;
+      largestCellIndex = i;
+    }
+  }
+
+  // Set the width of all record cells to the width of the largest cell
+  for (var i = 0; i < recordCells.length; i++) {
+    recordCells[i].style.width = maxWidth + 'px';
+  }
+
+  // Add the "record-cell-largest" class to the largest cell
+  recordCells[largestCellIndex].classList.add('record-cell-largest');
+
+</script>
+
+<!-- MAPBOX MAP-->
+<script>
+  mapboxgl.accessToken = 'pk.eyJ1IjoiYWx2YXJvcmciLCJhIjoiY2xpdW1iNGExMDE3YzNxcWgyd3ZkMGQ4aiJ9.AgQTU3uOI4KM4jHn1kN9cw';
+
+  // Initialize the map
+  var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v11',
+    center: [{{dev_info_["longitude"]}}, {{dev_info_["latitude"]}}],
+    zoom: 15
+  });
+
+  var marker = new mapboxgl.Marker()
+    .setLngLat([{{dev_info_["longitude"]}}, {{dev_info_["latitude"]}}])
+    .setPopup(new mapboxgl.Popup().setHTML('<b> Longitude: </b>' + {{dev_info_["longitude"]}} + '<br><b>Latitude: </b>' + {{dev_info_["latitude"]}}))
+    .addTo(map);
+
+</script>
+{% endblock %}

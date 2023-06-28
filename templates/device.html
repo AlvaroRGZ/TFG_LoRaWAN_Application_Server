@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Device {{dev_info_[0][1]}}{% endblock %}
+{% block page_title %}{% endblock %}
+{% set headers = ['EUI', 'Name', 'Latitude', 'Longitude', 'Altitude'] %}
+{% set common_data_headers = ['Date', 'Frame Counter'] %}
+{% block content %}
+  <div class="container">
+    <div class="row">
+      <div class="col s12">
+        <p class="center-align">{{dev_info_[0][1]}}</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col s3">
+        <p>DATA</p>
+        <table class="table table-bordered">
+          {% for header in headers %}
+          <tr>
+            <th>{{ header }}</th>
+            <td>{{ dev_info_[0][loop.index0] }}</td>
+          </tr>
+          {% endfor %}
+        </table>
+        <a class="btn-small blue" href="{{ url_for('modify_device', eui=dev_info_[0][0]) }}">Modify data</a>
+        <a class="btn-small blue" href="{{ url_for('devicegraph', dev=dev_info_[0][0]) }}">View graphic</a>
+      </div>
+      <div class="col s9">
+        <p>Last Uplinks</p>
+        {% if dev_data_ %}
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                {% for header in common_data_headers %}
+                  <th>{{ header }}</th>
+                {% endfor %}
+                {% for header in dev_data_[0][3] %}
+                  <th>{{ header }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in dev_data_ %}
+                <tr>
+                  {% for value in [1, 2] %}
+                    <td>{{ row[value] }}</td>
+                  {% endfor %}
+                  {% for key, value in row[3].items() %}
+                    <td>{{ value }}</td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p>No data received yet</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
