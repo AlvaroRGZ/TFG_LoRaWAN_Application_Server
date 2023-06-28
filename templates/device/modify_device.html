@@ -51,7 +51,7 @@
       container: 'map',
       style: 'mapbox://styles/mapbox/streets-v11',
       center: [{{dev_.longitude}}, {{dev_.latitude}}],
-      zoom: 12
+      zoom: 17
     });
     // Add markers for device locations
     var old_position = new mapboxgl.Marker()
@@ -80,6 +80,11 @@
   <script>
     document.getElementById('mod').addEventListener('submit', function(e) {
       e.preventDefault(); // Prevent default form submission
+      if (document.getElementById('new_latitude').value == '' ||
+          document.getElementById('new_longitude').value == '') {
+        document.getElementById('new_latitude').value = {{dev_.latitude}};
+        document.getElementById('new_longitude').value = {{dev_.longitude}};
+      }
       submitForm(); // Call submitForm() function to submit the form
     });
   </script>
