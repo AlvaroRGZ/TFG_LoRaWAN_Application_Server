@@ -6,25 +6,17 @@
 {% block content %}
   <div class="container">
     <div class="row">
-      <div class="col s12">
-        <p class="center-align">{{dev_info_[0][1]}}</p>
+      <div class="col s6">
+        <p class="font-30">{{dev_info_[0][1]}}</p>
+      </div>
+      <div class="col s6">
+        <a type="button" href="{{ url_for('devicegraph', dev=dev_info_[0][0]) }}" class="btn btn-info">Back to graph</a>
+        <a type="button" href="{{ url_for('devicegraph', dev=dev_info_[0][0]) }}" class="btn btn-warning">Download</a>
+        <a type="button" href="{{ url_for('devicegraph', dev=dev_info_[0][0]) }}" class="btn btn-danger">Clear data</a>
       </div>
     </div>
     <div class="row">
-      <div class="col s3">
-        <p>DATA</p>
-        <table class="table table-bordered">
-          {% for header in headers %}
-          <tr>
-            <th>{{ header }}</th>
-            <td>{{ dev_info_[0][loop.index0] }}</td>
-          </tr>
-          {% endfor %}
-        </table>
-        <a class="btn-small blue" href="{{ url_for('modify_device', eui=dev_info_[0][0]) }}">Modify data</a>
-        <a class="btn-small blue" href="{{ url_for('devicegraph', dev=dev_info_[0][0]) }}">View graphic</a>
-      </div>
-      <div class="col s9">
+      <div class="col s12">
         <p>Last Uplinks</p>
         {% if dev_data_ %}
           <table class="table table-bordered">
