@@ -189,6 +189,9 @@ def devicegraph(dev):
   # Get last uplink data
   uplink = data[0]
 
+  # Formatear la fecha en un formato sencillo y legible
+  fecha_formateada = uplink[0].strftime('%d de %B de %Y, %H:%M:%S')
+
   ## Convert Query Result in dataframe
   dump = json.dumps(data, default=serialize_datetime)
   dict1 = json.loads(dump)
@@ -251,7 +254,7 @@ def devicegraph(dev):
   return render_template('device/graph.html', graphJSON=graphs,
                          description=description,
                          uplink_ = uplink, dev_info_ = dev_data,
-                         headers_=yData)
+                         headers_=yData, fecha_formateada_ = fecha_formateada)
 
 @app.route('/map')
 def map():
