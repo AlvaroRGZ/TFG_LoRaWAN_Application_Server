@@ -5,8 +5,8 @@
 {% block content %}
 <div class="custom-container">
   <div class="row">
-    <div class="col">
-      <p class="center-align blue">Gateways</p>
+    <div class="col-4">
+      <p class="center-align font-25" style="text-align: center;">Gateways</p>
       {% if gateways_ %}
         {% for gat in gateways_ %}
           <div class='gateway'>
@@ -18,12 +18,12 @@
         <p class="errordevice">No hay gateways registrados</p>
       {% endif %}
     </div>
-    <div class="col">
-      <p class="center-align blue">Network Map</p>
+    <div class="col-4">
+      <p class="center-align font-25" style="text-align: center;">Network Map</p>
       <div id="map" class="map"></div>
     </div>
-    <div class="col">
-      <p class="center-align blue">Devices</p>
+    <div class="col-4">
+      <p class="center-align font-25" style="text-align: center;">Devices</p>
       {% if devices_ %}
       {% for dev in devices_ %}
       <div class='device'>

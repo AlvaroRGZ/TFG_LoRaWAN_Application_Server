@@ -34,11 +34,15 @@
         <br>
         <h4>Descripción</h4>
         <p class="font-25">
-          Descripción del gateway.
+          {% if gat_info_[5] == "" %}
+            No description given.
+          {% else %}
+            {{ gat_info_[5] }}.
+          {% endif %}
         </p>
       </div>
       <div class="col-sm-3 col-md-3" style="text-align: center;">
-        <a type="button" href="#" class="btn btn-info" style="width: 100%;">
+        <a type="button" href="{{ url_for('modify_gateway', eui=gat_info_[0]) }}" class="btn btn-info" style="width: 100%;">
           Modify data
         </a>
       </div>

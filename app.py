@@ -297,7 +297,7 @@ def map():
 
 ###
 
-@app.route('/modify/<eui>', methods=('GET', 'POST'))
+@app.route('/modify/device/<eui>', methods=('GET', 'POST'))
 def modify_device(eui):
   if request.method == 'POST':
     conn = get_db_connection()
@@ -342,6 +342,53 @@ def modify_device(eui):
     cur.close()
     conn.close()
     return render_template("device/modify_device.html", dev_ = dev, res_=res)
+  else:
+    return render_template("error.html", errorMessage="Error registrando dispositivo")
+
+@app.route('/modify/gateway/<eui>', methods=('GET', 'POST'))
+def modify_gateway(eui):
+  if request.method == 'POST':
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Check if device already exits, creates a new one if not
+    cur.execute('UPDATE gateway SET '
+                'description = \'{}\', '
+                'latitude = \'{}\', '
+                'longitude = \'{}\', '
+                'altitude = \'{}\' '
+                'WHERE eui = \'{}\''.format(request.form.get("new_desc"),
+                                            request.form.get("new_latitude"),
+                                            request.form.get("new_longitude"),
+                                            request.form.get("new_altitude"),
+                                            eui))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return redirect(url_for('modify_gateway', eui = eui))
+  elif request.method == 'GET':
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Get gateway information
+    cur.execute('SELECT * FROM gateway WHERE eui=\'{}\';'.format(eui))
+    gateway = cur.fetchall()
+    #dev = dict(dev)
+    # From tuple to struct
+    gat = {
+      "eui": gateway[0][0],
+      "name": gateway[0][1],
+      "latitude": gateway[0][2],
+      "longitude": gateway[0][3],
+      "altitude": gateway[0][4],
+      "description": gateway[0][5]
+    }
+
+    print(gat)
+    res = ""
+    cur.close()
+    conn.close()
+    return render_template("gateway/modify_gateway.html", gat_ = gat, res_=res)
   else:
     return render_template("error.html", errorMessage="Error registrando dispositivo")
 
