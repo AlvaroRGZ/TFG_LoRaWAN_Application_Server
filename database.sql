@@ -92,3 +92,18 @@ CREATE TABLE public.gateway_range (
     REFERENCES device(eui)
     ON DELETE CASCADE
 );
+
+-- Tabla alerts
+-- Almacena los registros que han traspasado los
+-- limites impuestos
+CREATE TABLE public.alerts (
+  eui varchar(16),
+  descrip varchar(250),
+  param varchar(80),
+  value numeric,
+
+  CONSTRAINT fk_eui
+    FOREIGN KEY(eui)
+    REFERENCES device(eui)
+    ON DELETE CASCADE
+);

@@ -35,6 +35,7 @@ def on_message(client, userdata, message):
                     msg["rxInfo"][0]["location"]["altitude"])
   else:
     save_data(msg)
+    check_limits(msg)
 
 def search_eui(eui):
   conn = get_db_connection()
@@ -118,6 +119,48 @@ def look_for_new_gateways(msg):
   conn.commit()
   cur.close()
   conn.close()
+
+def check_limits(msg):
+  conn = get_db_connection()
+  cur = conn.cursor()
+  limits = get_device_limits(msg["devEUI"])
+  for parame, value in msg["object"].items():
+    for limit in limits:
+      if limit["parameter"] == parame:
+        if (value < limit["min"]):
+          desc = 'Valor del parámetro {} = {} inferior al minimo {}'.format(parame, value, limit["min"])
+          cur.execute('INSERT INTO alerts '
+                      '(eui, descrip, param, value) VALUES '
+                      "('{}','{}', '{}', {});".format(msg["devEUI"], desc, parame, value))
+        if (value > limit["max"]):
+          desc = 'Valor del parámetro {} = {} superior al maximo {}'.format(parame, value, limit["max"])
+          cur.execute('INSERT INTO alerts '
+                      '(eui, descrip, param, value) VALUES '
+                      "('{}','{}', '{}', {});".format(msg["devEUI"], desc, parame, value))
+        
+  conn.commit()
+  cur.close()
+  conn.close()
+
+def get_device_limits(eui):
+  conn = get_db_connection()
+  cur = conn.cursor()
+  
+  cur.execute('SELECT parameter, min, max FROM device_limits '
+              "WHERE eui = '{}'".format(eui))
+  lim = cur.fetchall()
+
+  limits = []
+  if (len(lim) > 0):
+    limits.append({
+      "parameter": lim[0][0],
+      "min": lim[0][1],
+      "max": lim[0][2],
+    })
+
+  cur.close()
+  conn.close()
+  return limits
 
 gateway_host = "localhost"
 # -------------------- Main script --------------------
