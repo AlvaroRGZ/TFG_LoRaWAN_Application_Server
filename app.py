@@ -132,7 +132,7 @@ def gateway(eui):
 
   cur.close()
   conn.close()
-  return render_template("gateway.html",
+  return render_template("gateway/gateway.html",
                          gat_info_ = gat_info[0],
                          devs_ = devs)
 
