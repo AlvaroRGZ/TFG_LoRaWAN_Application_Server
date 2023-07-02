@@ -15,8 +15,11 @@
       </div>
     </div>
     <div class="row">
-      <div class="col-sm-12 col-md-3">
-        <div id="map" class="device-map"></div>
+      <div class="col-sm-12 col-md-3" style="text-align: center;">
+        <h6>Ubicación</h6>
+        <div style="display: flex; justify-content: center; align-items: center;">
+          <div id="map" class="device-map"></div>
+        </div>
       </div>
       <div class="col-sm-12 col-md-7">
         <div class="row">
@@ -35,18 +38,18 @@
           {% endfor %}
         </div>
       </div>
-      <div class="col-sm-2 col-md-2">
-        <a type="button" href="{{ url_for('modify_device', eui=dev_info_['eui']) }}" class="btn btn-info">
+      <div class="col-sm-2 col-md-2" style="text-align: right;">
+        <a type="button" href="{{ url_for('modify_device', eui=dev_info_['eui']) }}" class="btn btn-info" style="width: 100%;">
           Modify data
         </a>
         <br>
         <br>
-        <a type="button" href="{{ url_for('device', dev=dev_info_['eui']) }}" class="btn btn-info">
+        <a type="button" href="{{ url_for('device', dev=dev_info_['eui']) }}" class="btn btn-info" style="width: 100%;">
           View raw data
         </a>
         <br>
         <br>
-        <a type="button" href="{{ url_for('limits', eui=dev_info_['eui']) }}" class="btn btn-info">
+        <a type="button" href="{{ url_for('limits', eui=dev_info_['eui']) }}" class="btn btn-info" style="width: 100%;">
           Set limits
         </a>
       </div>
