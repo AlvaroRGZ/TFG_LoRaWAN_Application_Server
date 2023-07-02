@@ -23,8 +23,12 @@
       <div class="col-sm-12 col-md-6">
         <div class="row">
           <ul style="list-style-type: none;">
-            <li class="font-25"> <b>Last uplink at </b>{{ devs_[0][1].strftime('%d de %B de %Y, %H:%M:%S') }}</li>
-            <li class="font-25"> <b>From device </b>{{ devs_[0][0] }}</li>
+            {% if devs_|length %}
+              <li class="font-25"> <b>Last uplink at </b>{{ devs_[0][1].strftime('%d de %B de %Y, %H:%M:%S') }}</li>
+              <li class="font-25"> <b>From device </b>{{ devs_[0][0] }}</li>
+            {% else %}
+              <li class="font-25">Nothing catched yet</li>
+            {% endif %}
           </ul>
         </div>
         <br>
@@ -42,26 +46,30 @@
     <div class="row">
       <div class="col-sm-12 col-md-12">
         <p class="font-30">Devices in range</p>
-        <div style="display: flex; justify-content: center; align-items: center;">
-          <table class="table table-borderless font-25">
-            <thead>
-              <th> 
-                Device
-              </th>
-              <th> 
-                Last seen at
-              </th>
-            </thead>
-            <tbody>
-              {% for dev in devs_ %}
-                <tr>
+        {% if devs_|length %}
+          <div style="display: flex; justify-content: center; align-items: center;">
+            <table class="table table-borderless font-25">
+              <thead>
+                <th> 
+                  Device
+                </th>
+                <th> 
+                  Last seen at
+                </th>
+              </thead>
+              <tbody>
+                {% for dev in devs_ %}
+                  <tr>
                     <td>{{ dev[0] }}</td>
                     <td>{{ dev[1].strftime('%d de %B de %Y, %H:%M:%S') }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+            <p class="font-25">No devices in range</p>
+          {% endif %}
       </div>
     </div>
   </div>
