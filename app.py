@@ -197,12 +197,14 @@ def devicegraph(dev):
               'FROM device '
               "WHERE eui = \'{}\'".format(dev))
   device_data = cur.fetchall()
+  print(device_data)
   dev_data = {
       "eui": device_data[0][0],
       "name": device_data[0][1],
       "latitude": device_data[0][2],
       "longitude": device_data[0][3],
-      "altitude": device_data[0][4]
+      "altitude": device_data[0][4],
+      "description": device_data[0][5]
     }
 
 
@@ -305,13 +307,11 @@ def modify_device(eui):
 
     # Check if device already exits, creates a new one if not
     cur.execute('UPDATE device SET '
-                'eui = \'{}\', '
-                'name = \'{}\', '
+                'description = \'{}\', '
                 'latitude = \'{}\', '
                 'longitude = \'{}\', '
                 'altitude = \'{}\' '
-                'WHERE eui = \'{}\''.format(request.form.get("new_eui"),
-                                            request.form.get("new_name"),
+                'WHERE eui = \'{}\''.format(request.form.get("new_desc"),
                                             request.form.get("new_latitude"),
                                             request.form.get("new_longitude"),
                                             request.form.get("new_altitude"),
@@ -334,7 +334,8 @@ def modify_device(eui):
       "name": device[0][1],
       "latitude": device[0][2],
       "longitude": device[0][3],
-      "altitude": device[0][4]
+      "altitude": device[0][4],
+      "description": device[0][5]
     }
 
     print(dev)

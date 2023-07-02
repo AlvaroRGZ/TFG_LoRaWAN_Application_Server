@@ -20,6 +20,14 @@
         <div style="display: flex; justify-content: center; align-items: center;">
           <div id="map" class="device-map"></div>
         </div>
+        <h4>Descripción</h4>
+        <p class="font-25">
+          {% if dev_info_["description"] == ""  or dev_info_["description"] == None %}
+            No description given.
+          {% else %}
+            {{ dev_info_["description"] }}
+          {% endif %}
+        </p>
       </div>
       <div class="col-sm-12 col-md-7">
         <div class="row">

@@ -5,24 +5,21 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.js"></script>
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.css" rel="stylesheet" />
   <div class="container">
-    <h1>MODIFY DEVICE</h1>
+    <h1>MODIFY {{dev_.name}}</h1>
     <form method="post" name="mod" id="mod">
       <div class="row">
-        <div class="col s6">
-          <p>
-            <label for="name">Name</label>
-            <input type="text" name="new_name" value="{{dev_.name}}"></input>
-          </p>
-          <p>
-            <label for="eui">EUI</label>
-            <input type="text" name="new_eui" value="{{dev_.eui}}"></input>
-          </p>
-          <p>
-            <label for="altitude">Altitude</label>
-            <input type="text" name="new_altitude" value="{{dev_.altitude}}"></input>
-          </p>
+        <div class="col-md-6 modify-form-background">
+          <div class="form-group">
+            <label for="desc" class="font-25">Descripción</label>
+            <textarea  type="text" class="form-control" name="new_desc" placeholder="{{dev_.description}}" size="250">{{dev_.description}}</textarea>
+          </div>
+          <small class="form-text text-muted">Max 250 caracters.</small>
+          <div class="form-group">
+            <label for="altitude" class="font-25">Altitude</label>
+            <input type="number" class="form-control" name="new_altitude" value="{{dev_.altitude}}"></input>
+          </div>
         </div>        
-        <div class="col s6">
+        <div class="col-md-6">
           <div id="map" class="map"></div>
           <input type="hidden" id="latitude" name="latitude" value="{{dev_.longitude}}">
           <input type="hidden" id="longitude" name="longitude" value="{{dev_.latitude}}">
@@ -31,10 +28,13 @@
         </div>
       </div>
       <div class="row">
-        <div class="col s12">
-          <button type="submit" formaction="{{ url_for('modify_device', eui=dev_.eui) }}">
+        <div class="col-12">
+          <button type="submit" class="btn btn-success" formaction="{{ url_for('modify_device', eui=dev_.eui) }}">
             Submit
           </button>
+          <a type="button" class="btn btn-secondary" href="{{ url_for('device', dev=dev_.eui) }}">
+            Back
+          </a>
         </div>
       </div>
     </form>
