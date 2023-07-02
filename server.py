@@ -130,13 +130,13 @@ def check_limits(msg):
         if (value < limit["min"]):
           desc = 'Valor del parámetro {} = {} inferior al minimo {}'.format(parame, value, limit["min"])
           cur.execute('INSERT INTO alerts '
-                      '(eui, descrip, param, value) VALUES '
-                      "('{}','{}', '{}', {});".format(msg["devEUI"], desc, parame, value))
+                      '(eui, descrip, param, value, date) VALUES '
+                      "('{}','{}', '{}', {}, '{}');".format(msg["devEUI"], desc, parame, value, datetime.datetime.now()))
         if (value > limit["max"]):
           desc = 'Valor del parámetro {} = {} superior al maximo {}'.format(parame, value, limit["max"])
           cur.execute('INSERT INTO alerts '
-                      '(eui, descrip, param, value) VALUES '
-                      "('{}','{}', '{}', {});".format(msg["devEUI"], desc, parame, value))
+                      '(eui, descrip, param, value, date) VALUES '
+                      "('{}','{}', '{}', {}, '{}');".format(msg["devEUI"], desc, parame, value, datetime.datetime.now()))
         
   conn.commit()
   cur.close()

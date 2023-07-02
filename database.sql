@@ -101,6 +101,7 @@ CREATE TABLE public.alerts (
   descrip varchar(250),
   param varchar(80),
   value numeric,
+  date timestamp,
 
   CONSTRAINT fk_eui
     FOREIGN KEY(eui)

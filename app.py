@@ -483,6 +483,26 @@ def limits(eui):
   else:
     return render_template("error.html", errorMessage="Error registrando dispositivo")
 
+@app.route('/alerts')
+def alerts():
+  conn = get_db_connection()
+  cur = conn.cursor()
+
+  # Get alerts information
+  cur.execute('SELECT * FROM alerts;')
+  alerts = cur.fetchall()
+
+  # Get Devices names
+  cur.execute('SELECT eui, name '
+              'FROM device '
+              'WHERE eui in (SELECT eui FROM alerts);')
+  names = cur.fetchall()
+
+  cur.close()
+  conn.close()
+  return render_template("alerts.html",
+                         alerts_ = alerts,
+                         names_ = names[0])
 
 @app.route('/get_desc')
 def get_desc():

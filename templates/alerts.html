@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Alerts{% endblock %}
+{% block page_title %}{% endblock %}
+{% block content %}
+  <div class="container">
+    <h2>Alertas</h2>
+    <div class="row">
+      
+      <ul class="col s6" style="list-style-type: none;">
+        {% for alert in alerts_ %}
+          <li class="font-25"><b>{{alert[0]}}</b> {{alert[1]}}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+{% endblock %}
