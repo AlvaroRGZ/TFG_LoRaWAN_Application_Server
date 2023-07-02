@@ -15,10 +15,10 @@
       </div>
     </div>
     <div class="row">
-      <div class="col-sm-12 col-md-2">
+      <div class="col-sm-12 col-md-3">
         <div id="map" class="device-map"></div>
       </div>
-      <div class="col-sm-12 col-md-6">
+      <div class="col-sm-12 col-md-7">
         <div class="row">
           <p class="font-25"> <b>Last uplink at </b> {{ fecha_formateada_ }}</p>
         </div>
@@ -35,7 +35,7 @@
           {% endfor %}
         </div>
       </div>
-      <div class="col-sm-3 col-md-3">
+      <div class="col-sm-2 col-md-2">
         <a type="button" href="{{ url_for('modify_device', eui=dev_info_['eui']) }}" class="btn btn-info">
           Modify data
         </a>
