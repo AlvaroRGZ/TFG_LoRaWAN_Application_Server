@@ -88,7 +88,7 @@ def device(dev):
   dev_info = cur.fetchall()
 
   # Get last 10 device uplinks
-  cur.execute('SELECT * '
+  cur.execute('SELECT eui, rec_date, obj '
               'FROM data '
               "WHERE eui = \'{}\'".format(dev) + ' ORDER BY rec_date DESC LIMIT 10 ')
   dev_data = cur.fetchall()
@@ -96,7 +96,9 @@ def device(dev):
   # Construct the obj json
   uplink_objs = []
   for uplink in dev_data:
-    uplink_objs.append(uplink[3])
+    uplink_objs.append(uplink[2])
+
+  print(dev_data)
 
   cur.close()
   conn.close()

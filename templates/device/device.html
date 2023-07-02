@@ -2,7 +2,7 @@
 {% block title %}Device {{dev_info_[0][1]}}{% endblock %}
 {% block page_title %}{% endblock %}
 {% set headers = ['EUI', 'Name', 'Latitude', 'Longitude', 'Altitude'] %}
-{% set common_data_headers = ['Date', 'Frame Counter'] %}
+{% set common_data_headers = ['Date'] %}
 {% block content %}
   <div class="container">
     <div class="row">
@@ -25,7 +25,7 @@
                 {% for header in common_data_headers %}
                   <th>{{ header }}</th>
                 {% endfor %}
-                {% for header in dev_data_[0][3] %}
+                {% for header in dev_data_[0][2] %}
                   <th>{{ header }}</th>
                 {% endfor %}
               </tr>
@@ -33,10 +33,10 @@
             <tbody>
               {% for row in dev_data_ %}
                 <tr>
-                  {% for value in [1, 2] %}
+                  {% for value in [1] %}
                     <td>{{ row[value] }}</td>
                   {% endfor %}
-                  {% for key, value in row[3].items() %}
+                  {% for key, value in row[2].items() %}
                     <td>{{ value }}</td>
                   {% endfor %}
                 </tr>
