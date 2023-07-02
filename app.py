@@ -177,7 +177,7 @@ def register():
 # Define a custom function to serialize datetime objects
 def serialize_datetime(obj):
   if isinstance(obj, datetime.datetime):
-      return obj.isoformat()
+    return obj.isoformat()
   raise TypeError("Type not serializable")
 
 # Muestra grafico de interes del dispositivo deseado
@@ -199,13 +199,13 @@ def devicegraph(dev):
   device_data = cur.fetchall()
   print(device_data)
   dev_data = {
-      "eui": device_data[0][0],
-      "name": device_data[0][1],
-      "latitude": device_data[0][2],
-      "longitude": device_data[0][3],
-      "altitude": device_data[0][4],
-      "description": device_data[0][5]
-    }
+    "eui": device_data[0][0],
+    "name": device_data[0][1],
+    "latitude": device_data[0][2],
+    "longitude": device_data[0][3],
+    "altitude": device_data[0][4],
+    "description": device_data[0][5]
+  }
 
 
   # Get last uplink data
