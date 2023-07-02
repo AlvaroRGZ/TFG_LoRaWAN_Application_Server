@@ -45,7 +45,7 @@ CREATE TABLE public.gateway (
   PRIMARY KEY(eui)
 );
 
--- Tabla gateway
+-- Tabla data
 CREATE TABLE public.data (
   eui varchar(16),
   rec_date timestamp,
@@ -54,9 +54,9 @@ CREATE TABLE public.data (
 
   PRIMARY KEY(eui, rec_date),
   CONSTRAINT fk_eui
-  FOREIGN KEY(eui)
-  REFERENCES device(eui)
-  ON DELETE CASCADE
+    FOREIGN KEY(eui)
+    REFERENCES device(eui)
+    ON DELETE CASCADE
 );
 
 -- Tabla device_limits
@@ -70,7 +70,25 @@ CREATE TABLE public.device_limits (
 
   PRIMARY KEY(eui, parameter),
   CONSTRAINT fk_eui
-  FOREIGN KEY(eui)
-  REFERENCES device(eui)
-  ON DELETE CASCADE
+    FOREIGN KEY(eui)
+    REFERENCES device(eui)
+    ON DELETE CASCADE
+);
+
+-- Tabla gateway_range
+-- Almacena los dispositivos que tiene al alcance
+-- cada gateway
+CREATE TABLE public.gateway_range (
+  gat_eui varchar(16),
+  dev_eui varchar(16),
+
+  PRIMARY KEY(gat_eui, dev_eui),
+  CONSTRAINT fk_gat_eui
+    FOREIGN KEY(gat_eui)
+    REFERENCES gateway(eui)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_dev_eui
+    FOREIGN KEY(dev_eui)
+    REFERENCES device(eui)
+    ON DELETE CASCADE
 );

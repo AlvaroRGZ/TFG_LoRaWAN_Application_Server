@@ -1,27 +1,90 @@
 {% extends 'base.html' %}
-{% set headers = ['EUI', 'Name', 'Latitude', 'Longitude', 'Altitude'] %}
+{% block title %}Gateway {{ gat_info_.name }}{% endblock %}
+{% block page_title %}{% endblock %}
+
 {% block content %}
-  <div class="container">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.css" rel="stylesheet" />
+<body>
+  <div class="custom-container">
     <div class="row">
-      <div class="col s12">
-        <p class="center-align">{{gat_info_[0][1]}}</p>
+      <div class="col-sm-12 text-center">
+        <h3>{{ gat_info_[1] }}</h3>
+        <h5>{{ gat_info_[0] }}</h5>
       </div>
     </div>
     <div class="row">
-      <div class="col s3">
-        <p>DATA</p>
-        <table>
-          {% for header in headers %}
-          <tr>
-            <th>{{ header }}</th>
-            <td>{{ gat_info_[0][loop.index0] }}</td>
-          </tr>
-          {% endfor %}
-        </table>
+      <div class="col-sm-12 col-md-3" style="text-align: center;">
+        <h4>Ubicación</h4>
+        <div style="display: flex; justify-content: center; align-items: center;">
+          <div id="map" class="device-map"></div>
+        </div>
       </div>
-      <div class="col s9">
-        <p>Last activity</p>
+      <div class="col-sm-12 col-md-6">
+        <div class="row">
+          <ul style="list-style-type: none;">
+            <li class="font-25"> <b>Last uplink at </b>{{ devs_[0][1].strftime('%d de %B de %Y, %H:%M:%S') }}</li>
+            <li class="font-25"> <b>From device </b>{{ devs_[0][0] }}</li>
+          </ul>
+        </div>
+        <br>
+        <h4>Descripción</h4>
+        <p class="font-25">
+          Descripción del gateway.
+        </p>
+      </div>
+      <div class="col-sm-3 col-md-3" style="text-align: center;">
+        <a type="button" href="#" class="btn btn-info" style="width: 100%;">
+          Modify data
+        </a>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-12 col-md-12">
+        <p class="font-30">Devices in range</p>
+        <div style="display: flex; justify-content: center; align-items: center;">
+          <table class="table table-borderless font-25">
+            <thead>
+              <th> 
+                Device
+              </th>
+              <th> 
+                Last seen at
+              </th>
+            </thead>
+            <tbody>
+              {% for dev in devs_ %}
+                <tr>
+                    <td>{{ dev[0] }}</td>
+                    <td>{{ dev[1].strftime('%d de %B de %Y, %H:%M:%S') }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
+</body>
+
+<!-- MAPBOX MAP-->
+<script>
+  mapboxgl.accessToken = 'pk.eyJ1IjoiYWx2YXJvcmciLCJhIjoiY2xpdW1iNGExMDE3YzNxcWgyd3ZkMGQ4aiJ9.AgQTU3uOI4KM4jHn1kN9cw';
+
+  // Initialize the map
+  var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v11',
+    center: [{{gat_info_[3]}}, {{gat_info_[2]}}],
+    zoom: 15
+  });
+
+  var marker = new mapboxgl.Marker()
+    .setLngLat([{{gat_info_[3]}}, {{gat_info_[2]}}])
+    .setPopup(new mapboxgl.Popup().setHTML('<b> Longitude: </b>' + {{gat_info_[3]}} + '<br>' +
+                                           '<b>Latitude: </b>' + {{gat_info_[2]}} + '<br>' +
+                                           '<b>Altitude: </b>' + {{gat_info_[4]}}))
+    .addTo(map);
+
+</script>
 {% endblock %}

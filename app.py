@@ -118,10 +118,23 @@ def gateway(eui):
               'WHERE eui = \'{}\''.format(eui))
   gat_info = cur.fetchall()
 
+  # Get gateway' devices in range information
+  cur.execute('SELECT device.name, data.rec_date '
+              'FROM gateway_range CROSS JOIN data CROSS JOIN device '
+              'WHERE gateway_range.dev_eui = data.eui AND data.eui = device.eui AND '
+              'gat_eui = \'{}\' '
+              'GROUP BY device.eui, data.rec_date '
+              'HAVING data.rec_date >= ALL (SELECT rec_date '
+              'FROM data '
+              'WHERE eui = device.eui);'.format(eui))
+
+  devs = cur.fetchall()
+
   cur.close()
   conn.close()
   return render_template("gateway.html",
-                         gat_info_ = gat_info)
+                         gat_info_ = gat_info[0],
+                         devs_ = devs)
 
 @app.route('/register_device', methods=('GET', 'POST'))
 def register():

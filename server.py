@@ -103,9 +103,19 @@ def look_for_new_gateways(msg):
       cur.execute('INSERT INTO gateway '
                   '(eui, name, latitude, longitude, altitude) VALUES '
                   "('{}','{}', {}, '{}', '{}')".format(eui, nam, lat, lon, alt))
-      conn.commit()
+      
       print("\n[OK] New gateway. EUI: {}".format(eui))
 
+    # Si no existe la tupla la insertamos
+    cur.execute('SELECT gat_eui FROM gateway_range ' 
+                "WHERE gat_eui = '{}' AND dev_eui = '{}';".format(gateway["gatewayID"],
+                                                                  msg["devEUI"]))
+    if (len(cur.fetchall()) == 0):
+      # Registrar la relacion de alcance entre el dispositivo emisor y el gateway
+      cur.execute('INSERT INTO gateway_range '
+                  '(gat_eui, dev_eui) VALUES '
+                  "('{}','{}')".format(gateway["gatewayID"], msg["devEUI"]))
+  conn.commit()
   cur.close()
   conn.close()
 
