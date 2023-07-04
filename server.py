@@ -138,9 +138,9 @@ def check_limits(msg):
                       '(eui, descrip, param, value, date) VALUES '
                       "('{}','{}', '{}', {}, '{}');".format(msg["devEUI"], desc, param, value, datetime.datetime.now()))
           body = """
-          Alert: {} at {}
-            Recibed value {} = {} exceeds min = {}
-          """.format(msg["deviceName"], datetime.datetime.now().strftime('%d de %B de %Y, %H:%M:%S'), param, value, limit["min"])
+          Alert {} at {}
+          Recibed value {} = {} exceeds min = {}
+          """.format(msg["deviceName"], datetime.datetime.now().strftime('%d de %B de %Y a las %H:%M:%S'), param, value, limit["min"])
           send_alert(body)
         if (decimal.Decimal(value) > limit["max"]):
           desc = 'Valor del parámetro {} = {} superior al maximo {}'.format(param, value, limit["max"])
@@ -148,9 +148,9 @@ def check_limits(msg):
                       '(eui, descrip, param, value, date) VALUES '
                       "('{}','{}', '{}', {}, '{}');".format(msg["devEUI"], desc, param, value, datetime.datetime.now()))
           body = """
-          Alert: {} at {}
-            Recibed value {} = {} exceeds max = {}
-          """.format(msg["deviceName"], datetime.datetime.now().strftime('%d de %B de %Y, %H:%M:%S'), param, value, limit["max"])
+          Alert {} at {}
+          Recibed value {} = {} exceeds max = {}
+          """.format(msg["deviceName"], datetime.datetime.now().strftime('%d de %B de %Y a las %H:%M:%S'), param, value, limit["max"])
           send_alert(body)
 
   conn.commit()
@@ -183,7 +183,7 @@ def send_alert(msg):
   # Enviar mensaje
   bot_token = open(".telegram_bot_token").read()
   bot_chatID = '623684150'
-  send_text = 'https://api.telegram.org/bot' + bot_token + '/sendMessage?chat_id=' + bot_chatID + '&text=' + msg
+  send_text = 'https://api.telegram.org/bot' + bot_token + '/sendMessage?chat_id=' + bot_chatID + '&parse_mode=Markdown&text=' + msg
 
   requests.get(send_text)
 
