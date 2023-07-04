@@ -455,9 +455,6 @@ def limits(eui):
       print("------------------------")
 
       if mind or maxd:
-        # Validate and convert to decimal
-        mind_decimal = decimal.Decimal(mind) if mind else None
-        maxd_decimal = decimal.Decimal(maxd) if maxd else None
         # Check if the record already exists
         cur.execute("SELECT COUNT(*) FROM device_limits WHERE eui = %s AND parameter = %s;", (eui, p))
         count = cur.fetchone()[0]

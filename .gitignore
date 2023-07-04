@@ -1,6 +1,6 @@
 # Project specific
 .mapbox_token
-
+.telegram_bot_token
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

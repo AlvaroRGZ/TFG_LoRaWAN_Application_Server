@@ -6,10 +6,13 @@ import time
 import json
 import datetime;
 import requests;
-
+import decimal
 # Definimos la cola en la que se almacenaran los datos recibidos
 import queue as queue
 q = queue.Queue()
+
+# Tamaño minimo de un mensaje de uplink
+UPLINK_MESSAGE_SIZE = 7
 
 # Configurar la conexion con la base de datos
 bbdd_host = 'localhost'
@@ -26,17 +29,18 @@ def on_message(client, userdata, message):
   message = str(message.payload.decode("utf-8"))
   msg = json.loads(message)
 
-  look_for_new_gateways(msg)
+  if (len(msg) > UPLINK_MESSAGE_SIZE):
+    look_for_new_gateways(msg)
 
-  eui = msg["devEUI"]
-  if search_eui(eui) == None:
-    register_device(eui, msg["deviceName"],
-                    msg["rxInfo"][0]["location"]["latitude"],
-                    msg["rxInfo"][0]["location"]["longitude"],
-                    msg["rxInfo"][0]["location"]["altitude"])
-  else:
-    save_data(msg)
-    check_limits(msg)
+    eui = msg["devEUI"]
+    if search_eui(eui) == None:
+      register_device(eui, msg["deviceName"],
+                      msg["rxInfo"][0]["location"]["latitude"],
+                      msg["rxInfo"][0]["location"]["longitude"],
+                      msg["rxInfo"][0]["location"]["altitude"])
+    else:
+      save_data(msg)
+      check_limits(msg)
 
 def search_eui(eui):
   conn = get_db_connection()
@@ -125,20 +129,30 @@ def check_limits(msg):
   conn = get_db_connection()
   cur = conn.cursor()
   limits = get_device_limits(msg["devEUI"])
-  for parame, value in msg["object"].items():
+  for param, value in msg["object"].items():
     for limit in limits:
-      if limit["parameter"] == parame:
-        if (value < limit["min"]):
-          desc = 'Valor del parámetro {} = {} inferior al minimo {}'.format(parame, value, limit["min"])
+      if limit["parameter"] == param:
+        if (decimal.Decimal(value) < limit["min"]):
+          desc = 'Valor del parámetro {} = {} inferior al minimo {}'.format(param, value, limit["min"])
           cur.execute('INSERT INTO alerts '
                       '(eui, descrip, param, value, date) VALUES '
-                      "('{}','{}', '{}', {}, '{}');".format(msg["devEUI"], desc, parame, value, datetime.datetime.now()))
-        if (value > limit["max"]):
-          desc = 'Valor del parámetro {} = {} superior al maximo {}'.format(parame, value, limit["max"])
+                      "('{}','{}', '{}', {}, '{}');".format(msg["devEUI"], desc, param, value, datetime.datetime.now()))
+          body = """
+          Alert: {} at {}
+            Recibed value {} = {} exceeds min = {}
+          """.format(msg["deviceName"], datetime.datetime.now().strftime('%d de %B de %Y, %H:%M:%S'), param, value, limit["min"])
+          send_alert(body)
+        if (decimal.Decimal(value) > limit["max"]):
+          desc = 'Valor del parámetro {} = {} superior al maximo {}'.format(param, value, limit["max"])
           cur.execute('INSERT INTO alerts '
                       '(eui, descrip, param, value, date) VALUES '
-                      "('{}','{}', '{}', {}, '{}');".format(msg["devEUI"], desc, parame, value, datetime.datetime.now()))
-        
+                      "('{}','{}', '{}', {}, '{}');".format(msg["devEUI"], desc, param, value, datetime.datetime.now()))
+          body = """
+          Alert: {} at {}
+            Recibed value {} = {} exceeds max = {}
+          """.format(msg["deviceName"], datetime.datetime.now().strftime('%d de %B de %Y, %H:%M:%S'), param, value, limit["max"])
+          send_alert(body)
+
   conn.commit()
   cur.close()
   conn.close()
@@ -153,24 +167,25 @@ def get_device_limits(eui):
 
   limits = []
   if (len(lim) > 0):
-    limits.append({
-      "parameter": lim[0][0],
-      "min": lim[0][1],
-      "max": lim[0][2],
-    })
+    for l in lim:
+      limits.append({
+        "parameter": l[0],
+        "min": decimal.Decimal(l[1]),
+        "max": decimal.Decimal(l[2]),
+      })
 
   cur.close()
   conn.close()
   return limits
 
-def get_device_limits(eui):
+def send_alert(msg):
 
   # Enviar mensaje
-  bot_token = '6394863621:AAEk3RMJL4gha5NQgwKML5WvFdjvj9k378E'
-  bot_chatID = 'YOUR_CHAT_ID'
-  send_text = 'https://api.telegram.org/bot' + bot_token + '/sendMessage?chat_id=' + bot_chatID + '&parse_mode=Markdown&text=' + bot_message
+  bot_token = open(".telegram_bot_token").read()
+  bot_chatID = '623684150'
+  send_text = 'https://api.telegram.org/bot' + bot_token + '/sendMessage?chat_id=' + bot_chatID + '&text=' + msg
 
-  response = requests.get(send_text)
+  requests.get(send_text)
 
 gateway_host = "localhost"
 # -------------------- Main script --------------------
