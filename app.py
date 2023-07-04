@@ -90,7 +90,7 @@ def device(dev):
   # Get last 10 device uplinks
   cur.execute('SELECT eui, rec_date, obj '
               'FROM data '
-              "WHERE eui = \'{}\'".format(dev) + ' ORDER BY rec_date DESC LIMIT 10 ')
+              "WHERE eui = \'{}\'".format(dev) + ' ORDER BY rec_date DESC;')
   dev_data = cur.fetchall()
 
   # Construct the obj json
@@ -181,102 +181,160 @@ def serialize_datetime(obj):
   raise TypeError("Type not serializable")
 
 # Muestra grafico de interes del dispositivo deseado
-@app.route('/device/<dev>/graph')
+@app.route('/device/<dev>/graph', methods=['GET', 'POST'])
 def devicegraph(dev):
+  if request.method == 'POST':
+    start_date = request.form.get('start_date')
+    end_date = request.form.get('end_date')
+
+    # Realizar la llamada a la base de datos para almacenar las fechas
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Verificar si existe un registro previo para el dispositivo
+    cur.execute('SELECT COUNT(*) FROM web_preferences WHERE eui = %s', (dev,))
+    existing_records = cur.fetchone()[0]
+
+    if existing_records > 0:
+        # Actualizar el registro existente
+        cur.execute('UPDATE web_preferences SET begin_time = %s, end_time = %s WHERE eui = %s', (start_date, end_date, dev))
+    else:
+        # Insertar un nuevo registro
+        cur.execute('INSERT INTO web_preferences (eui, begin_time, end_time) VALUES (%s, %s, %s)', (dev, start_date, end_date))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    # Redirigir al usuario a la página de gráficas
+    return redirect(url_for('devicegraph', dev=dev))
+
   conn = get_db_connection()
   cur = conn.cursor()
 
-  # Obtain registered data from device to plot
+  # Obtener los límites de tiempo
+  cur.execute('SELECT begin_time, end_time '
+              'FROM web_preferences '
+              "WHERE eui = \'{}\'".format(dev))
+  dates = cur.fetchall()
+  data = []
+  if len(dates) > 0:
+    # Obtener registered data from device to plot
+    cur.execute('SELECT rec_date, obj '
+                'FROM data '
+                'WHERE eui = \'{}\' AND '
+                'rec_date BETWEEN \'{}\' AND \'{}\'  '
+                'ORDER BY rec_date DESC;'.format(dev,
+                                                dates[0][0],
+                                                dates[0][1]))
+    data = cur.fetchall()
+  else:
+    # Obtener registered data from device to plot
+    cur.execute('SELECT rec_date, obj '
+                'FROM data '
+                'WHERE eui = \'{}\' '
+                'ORDER BY rec_date DESC;'.format(dev))
+    data = cur.fetchall()
+
+  # Obtener registered data from device to plot
   cur.execute('SELECT rec_date, obj '
               'FROM data '
-              "WHERE eui = \'{}\'".format(dev) + ' ORDER BY rec_date DESC LIMIT 20')
-  data = cur.fetchall()
+              'WHERE eui = \'{}\' '
+              'ORDER BY rec_date DESC LIMIT 1;'.format(dev))
+  last_uplink = cur.fetchall()
 
-  # Obtain device information
+  # Obtener device information
   cur.execute('SELECT * '
               'FROM device '
               "WHERE eui = \'{}\'".format(dev))
   device_data = cur.fetchall()
   print(device_data)
   dev_data = {
-    "eui": device_data[0][0],
-    "name": device_data[0][1],
-    "latitude": device_data[0][2],
-    "longitude": device_data[0][3],
-    "altitude": device_data[0][4],
-    "description": device_data[0][5]
+      "eui": device_data[0][0],
+      "name": device_data[0][1],
+      "latitude": device_data[0][2],
+      "longitude": device_data[0][3],
+      "altitude": device_data[0][4],
+      "description": device_data[0][5]
   }
+  uplink = []
+  if (len(last_uplink) > 0): 
+    # Obtener last uplink data
+    uplink = last_uplink[0]
+    
+  if (len(data) > 0):
+    # Formatear la fecha en un formato sencillo y legible
+    fecha_formateada = data[0][0].strftime('%d de %B de %Y, %H:%M:%S')
 
+    ## Convert Query Result in dataframe
+    dump = json.dumps(data, default=serialize_datetime)
+    dict1 = json.loads(dump)
+    yData = []
 
-  # Get last uplink data
-  uplink = data[0]
+    register = dict(dict1[0][1])
+    for key, value in register.items():
+        yData.append(key)
+    dict2 = []
+    for r in dict1:
+        r[1]["rec_date"] = pd.to_datetime(r[0])  # Convertir la fecha a Timestamp
+        dict2.append(r[1])
 
-  # Formatear la fecha en un formato sencillo y legible
-  fecha_formateada = uplink[0].strftime('%d de %B de %Y, %H:%M:%S')
+    # Convertir el payload en un dataframe
+    normalized = pd.json_normalize(dict2)
+    df = pd.DataFrame(normalized)
 
-  ## Convert Query Result in dataframe
-  dump = json.dumps(data, default=serialize_datetime)
-  dict1 = json.loads(dump)
-  # 
-  yData = []
-  
-  register = dict(dict1[0][1])
-  #  print(register[0])
-  for key, value in register.items():
-    yData.append(key)
-  dict2 = []
-  for r in dict1:
-    r[1]["rec_date"] = r[0]
-    dict2.append(r[1])
+    graphs = []
+    for variable in yData:
+      df[variable] = df[variable].astype(float)
+      # Seleccion y construye el grafico
+      fig = px.line(df, x = 'rec_date', y = variable, color_discrete_sequence=px.colors.qualitative.Plotly, markers=True)
+      # Show the limits if they exists
+      # Obtener el limite min y max del dispositivo
+      cur.execute('SELECT min, max '
+                  'FROM device_limits '
+                  "WHERE eui = \'{}\' AND parameter = \'{}\'".format(dev, variable))
+      min_max = cur.fetchall()
+      if (min_max and min_max[0][0] is not None):
+        fig.add_shape(type='line',
+                      x0=df['rec_date'].min(),
+                      x1=df['rec_date'].max(),
+                      y0=min_max[0][0],
+                      y1=min_max[0][0],
+                      line=dict(color='red', dash='dash'),
+                      name='min')
+      if (min_max and min_max[0][1] is not None):
+        fig.add_shape(type='line',
+                      x0=df['rec_date'].min(),
+                      x1=df['rec_date'].max(),
+                      y0=min_max[0][1],
+                      y1=min_max[0][1],
+                      line=dict(color='green', dash='dash'),
+                      name='max')
 
-  # Convertir el payload en un dataframe
-  normalized = pd.json_normalize(dict2) 
+      fig.update_layout(showlegend=True)
+      graphs.append(json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder))
+    header = dev
+    description = """
+    Datos recibidos por el dispositivo con EUI: {}
+    """.format(dev)
 
-  # Create dataframe out of the normalized payload
-  df = pd.DataFrame(normalized)
+    cur.close()
+    conn.close()
+    
+    return render_template('device/graph.html', graphJSON=graphs,
+                          description=description,
+                          uplink_ = uplink, dev_info_ = dev_data,
+                          headers_=yData, fecha_formateada_ = fecha_formateada)
+  else:
 
-  graphs = []
-  for variable in yData:
-    df[variable] = df[variable].astype(float)
-    # Seleccion y construye el grafico
-    fig = px.line(df, x = 'rec_date', y = variable, color_discrete_sequence=px.colors.qualitative.Plotly, markers=True)
-    # Show the limits if they exists
-    # Obtener el limite min y max del dispositivo
-    cur.execute('SELECT min, max '
-                'FROM device_limits '
-                "WHERE eui = \'{}\' AND parameter = \'{}\'".format(dev, variable))
-    min_max = cur.fetchall()
-    if (min_max and min_max[0][0] is not None):
-      fig.add_shape(type='line',
-                    x0=df['rec_date'].min(),
-                    x1=df['rec_date'].max(),
-                    y0=min_max[0][0],
-                    y1=min_max[0][0],
-                    line=dict(color='red', dash='dash'),
-                    name='min')
-    if (min_max and min_max[0][1] is not None):
-      fig.add_shape(type='line',
-                    x0=df['rec_date'].min(),
-                    x1=df['rec_date'].max(),
-                    y0=min_max[0][1],
-                    y1=min_max[0][1],
-                    line=dict(color='green', dash='dash'),
-                    name='max')
-
-    fig.update_layout(showlegend=True)
-    graphs.append(json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder))
-  header = dev
-  description = """
-  Datos recibidos por el dispositivo con EUI: {}
-  """.format(dev)
-
-  cur.close()
-  conn.close()
-  
-  return render_template('device/graph.html', graphJSON=graphs,
-                         description=description,
-                         uplink_ = uplink, dev_info_ = dev_data,
-                         headers_=yData, fecha_formateada_ = fecha_formateada)
+    cur.close()
+    conn.close()
+    aviso = """
+    No se han recibido datos en este intervalo de tiempo
+    """
+    return render_template('device/graph.html', graphJSON=[],
+                          aviso_ = aviso,
+                          uplink_ = uplink, dev_info_ = dev_data)
 
 @app.route('/map')
 def map():

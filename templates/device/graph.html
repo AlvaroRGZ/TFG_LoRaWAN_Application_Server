@@ -31,7 +31,7 @@
       </div>
       <div class="col-sm-12 col-md-7">
         <div class="row">
-          <p class="font-25"> <b>Last uplink at </b> {{ fecha_formateada_ }}</p>
+          <p class="font-25"> <b>Last uplink at </b> {{ uplink_[0] }}</p>
         </div>
         <div class="row">
           {% for head, record in uplink_[1].items() %}
@@ -62,6 +62,32 @@
         </a>
       </div>
     </div>
+      <div class="row text-center">
+        <div class="col-sm-12">
+          <h4>Seleccionar Rango de Fechas</h4>
+          <form id="date-form" class="form-inline d-flex justify-content-center" method="POST" action="{{ url_for('devicegraph', dev = dev_info_.eui) }}">
+            <div class="form-group mx-sm-3 mb-2">
+              <label for="start-date" class="sr-only">Fecha de inicio</label>
+              <input type="date" class="form-control text-center" id="start-date" name="start_date" required>
+            </div>
+            <div class="form-group mx-sm-3 mb-2">
+              <label for="end-date" class="sr-only">Fecha de fin</label>
+              <input type="date" class="form-control text-center" id="end-date" name="end_date" required>
+            </div>
+            <div class="form-group mx-sm-3 mb-2">
+              <button type="submit" class="btn btn-primary">Generar Gráficas</button>
+            </div>
+          </form>
+        </div>
+        <div class="col-sm-12 alert alert-danger" role="alert">
+          La fecha de inicio es mayor a la de final.
+        </div>
+        {% if aviso_ %}
+          <div class="col-sm-12 text-center font-25" style="color: red;">
+            {{ aviso_ }}
+          </div>
+        {% endif %}
+      </div>
     <div class="row">
       {% for graph in graphJSON %}
       <div class="col-sm-12 col-lg-6">
@@ -131,4 +157,19 @@
     .addTo(map);
 
 </script>
+
+<script>
+  // Validar las fechas antes de enviar el formulario
+  var form = document.getElementById('date-form');
+  form.addEventListener('submit', function(event) {
+    var startDate = document.getElementById('start-date').value;
+    var endDate = document.getElementById('end-date').value;
+    if (startDate > endDate) {
+      var avisoDiv = document.querySelector('.alert');
+      avisoDiv.style.display = 'block';
+      event.preventDefault(); // Evitar que el formulario se envíe
+    }
+  });
+</script>
+
 {% endblock %}

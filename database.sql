@@ -108,3 +108,18 @@ CREATE TABLE public.alerts (
     REFERENCES device(eui)
     ON DELETE CASCADE
 );
+
+-- Tabla web_preferences
+-- Almacena las preferencias para mostrar los datos
+CREATE TABLE public.web_preferences (
+  eui varchar(16),
+  begin_time timestamp,
+  end_time timestamp,
+  nrows numeric,
+
+  PRIMARY KEY(eui),
+  CONSTRAINT fk_eui
+    FOREIGN KEY(eui)
+    REFERENCES device(eui)
+    ON DELETE CASCADE
+);
