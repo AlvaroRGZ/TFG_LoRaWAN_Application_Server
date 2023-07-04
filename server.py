@@ -5,6 +5,7 @@ import paho.mqtt.client as mqtt
 import time
 import json
 import datetime;
+import requests;
 
 # Definimos la cola en la que se almacenaran los datos recibidos
 import queue as queue
@@ -161,6 +162,15 @@ def get_device_limits(eui):
   cur.close()
   conn.close()
   return limits
+
+def get_device_limits(eui):
+
+  # Enviar mensaje
+  bot_token = '6394863621:AAEk3RMJL4gha5NQgwKML5WvFdjvj9k378E'
+  bot_chatID = 'YOUR_CHAT_ID'
+  send_text = 'https://api.telegram.org/bot' + bot_token + '/sendMessage?chat_id=' + bot_chatID + '&parse_mode=Markdown&text=' + bot_message
+
+  response = requests.get(send_text)
 
 gateway_host = "localhost"
 # -------------------- Main script --------------------
