@@ -18,18 +18,7 @@ import datetime
 import plotly.graph_objects as go
 mapbox_access_token = open(".mapbox_token").read()
 
-# Para crear mapas
-# import geopandas as gpd
-
 import requests
-
-
-# Enviar alertas por correo electronico
-import smtplib
-from email.message import EmailMessage
-
-#import grpc
-#from chirpstack_api.as_pb.external import api
 
 # Definimos la cola en la que se almacenaran los datos recibidos
 import queue as queue
@@ -336,25 +325,6 @@ def devicegraph(dev):
                           aviso_ = aviso,
                           uplink_ = uplink, dev_info_ = dev_data)
 
-@app.route('/map')
-def map():
-  
-  conn = get_db_connection()
-  cur = conn.cursor()
-
-  cur.execute('SELECT eui, name, latitude, longitude, altitude FROM device;')
-  devices = cur.fetchall()
-
-  cur.execute('SELECT eui, name, latitude, longitude, altitude FROM gateway;')
-  gateways = cur.fetchall()
-  
-  cur.close()
-  conn.close()
-
-  ## TESTING DEVICES MAP
-
-  return render_template('map.html', devices_ = devices, gateways_ = gateways, map_ = fig, MB_TOKEN = mapbox_access_token)
-
 @app.route('/modify/device/<eui>', methods=('GET', 'POST'))
 def modify_device(eui):
   if request.method == 'POST':
@@ -571,66 +541,3 @@ def alerts():
                          current_day_alerts=current_day_alerts,
                          previous_day_alerts=previous_day_alerts,
                          names=names[0])
-
-@app.route('/get_desc')
-def get_desc():
-
-  api_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5X2lkIjoiOWNiYTg4OGEtNmE2MC00NWM4LWEzYmQtYmZkYWFlNzEzMThhIiwiYXVkIjoiYXMiLCJpc3MiOiJhcyIsIm5iZiI6MTY4NTQ0MTg3NSwic3ViIjoiYXBpX2tleSJ9.6tXTkcGfROpbNhTodDRrbHdc5yhpeMXwNqEAEz_-BSw"
-  
-  server="localhost:8080"
-  eui="a84041a8318279bb"
-  api_url = "http://{}/api/devices/{}".format(server,eui)
-  auth_token = ("authorization", "Bearer %s" % api_token)
-  response = requests.get(api_url, headers=auth_token)
-  print(response.status_code)
-  response.status_code
-  return render_template('get.html', response_ = response.json())
-
-## TESTING
-# Metodo para extender la API de Chirpstack
-@app.route('/rget')
-def call():
-
-  # Configuration.
-
-  # This must point to the API interface.
-  server = "localhost:8080"
-  eui="a84041a8318279bb"
-
-  # The API token (retrieved using the web-interface).
-  api_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5X2lkIjoiOWNiYTg4OGEtNmE2MC00NWM4LWEzYmQtYmZkYWFlNzEzMThhIiwiYXVkIjoiYXMiLCJpc3MiOiJhcyIsIm5iZiI6MTY4NTQ0MTg3NSwic3ViIjoiYXBpX2tleSJ9.6tXTkcGfROpbNhTodDRrbHdc5yhpeMXwNqEAEz_-BSw"
-
-  # Connect without using TLS.
-  channel = grpc.insecure_channel(server)
-
-  # Device-queue API client.
-  client = api.DeviceQueueServiceStub(channel)
-
-  # Define the API key meta-data.
-  auth_token = [("authorization", "Bearer %s" % api_token)]
-
-  # Construct request.
-  req = api.GetDeviceRequest(eui, metadata=auth_token)
-  print(req)
-  return render_template("call.html", dev_info_ = resp)
-
-
-#def send_alert(dest, message, value):
-#  # Open the plain text file whose name is in textfile for reading.
-#  with open(textfile) as fp:
-#      # Create a text/plain message
-#      msg = EmailMessage()
-#      msg.set_content(fp.read())
-#
-#  # me == the sender's email address
-#  # you == the recipient's email address
-#  msg['Subject'] = f'The contents of {textfile}'
-#  msg['From'] = me
-#  msg['To'] = you
-#
-#  # Send the message via our own SMTP server.
-#  s = smtplib.SMTP('localhost')
-#  s.send_message(msg)
-#  s.quit()
-#  print(req)
-#  return render_template("call.html", dev_info_ = resp)
