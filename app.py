@@ -538,21 +538,39 @@ def alerts():
   conn = get_db_connection()
   cur = conn.cursor()
 
-  # Get alerts information
-  cur.execute('SELECT * FROM alerts;')
-  alerts = cur.fetchall()
+  current_date = datetime.date.today()  # Obtener la fecha actual (solo día, mes y año)
+
+  # Opcionalmente, puedes usar strftime para obtener una cadena con el formato deseado
+  current_date_str = current_date.strftime("%Y-%m-%d")
+  print(current_date_str)
+  # Get alerts received on the current day
+  cur.execute('SELECT name, descrip, param, value, date '
+              'FROM alerts '
+              'NATURAL JOIN device '
+              'WHERE DATE_TRUNC(\'day\', date) = %s '
+              'ORDER BY date DESC;', (current_date_str,))
+  current_day_alerts = cur.fetchall()
+
+  # Get alerts received before the current day
+  cur.execute('SELECT name, descrip, param, value, date '
+              'FROM alerts '
+              'NATURAL JOIN device '
+              'WHERE DATE_TRUNC(\'day\', date) < %s '
+              'ORDER BY date DESC;', (current_date_str,))
+  previous_day_alerts = cur.fetchall()
 
   # Get Devices names
   cur.execute('SELECT eui, name '
               'FROM device '
-              'WHERE eui in (SELECT eui FROM alerts);')
+              'WHERE eui IN (SELECT eui FROM alerts);')
   names = cur.fetchall()
 
   cur.close()
   conn.close()
   return render_template("alerts.html",
-                         alerts_ = alerts,
-                         names_ = names[0])
+                         current_day_alerts=current_day_alerts,
+                         previous_day_alerts=previous_day_alerts,
+                         names=names[0])
 
 @app.route('/get_desc')
 def get_desc():

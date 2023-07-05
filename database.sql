@@ -95,7 +95,7 @@ CREATE TABLE public.gateway_range (
 
 -- Tabla alerts
 -- Almacena los registros que han traspasado los
--- limites impuestos
+-- limites impuestos y cuando se recibieron
 CREATE TABLE public.alerts (
   eui varchar(16),
   descrip varchar(250),
