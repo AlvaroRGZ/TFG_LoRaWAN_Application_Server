@@ -96,7 +96,7 @@ def look_for_new_gateways(msg):
   
   for gateway in msg["rxInfo"]:
     cur.execute('SELECT name FROM gateway '
-                "WHERE eui = '{}'".format(gateway["gatewayID"]))
+                "WHERE eui = \'{}\'".format(gateway["gatewayID"]))
     
     if (len(cur.fetchall()) == 0):
       # Save gateway data
@@ -114,7 +114,7 @@ def look_for_new_gateways(msg):
 
     # Si no existe la tupla la insertamos
     cur.execute('SELECT gat_eui FROM gateway_range ' 
-                "WHERE gat_eui = '{}' AND dev_eui = '{}';".format(gateway["gatewayID"],
+                "WHERE gat_eui = \'{}\' AND dev_eui = \'{}\';".format(gateway["gatewayID"],
                                                                   msg["devEUI"]))
     if (len(cur.fetchall()) == 0):
       # Registrar la relacion de alcance entre el dispositivo emisor y el gateway
