@@ -23,8 +23,8 @@ SET default_tablespace = '';
 
 GRANT ALL PRIVILEGES ON DATABASE app TO admin;
 
--- Tabla device
-CREATE TABLE public.device (
+-- Tabla gateway
+CREATE TABLE public.gateway (
   eui varchar(16),
   name varchar(50),
   latitude  double precision,
@@ -34,8 +34,8 @@ CREATE TABLE public.device (
   PRIMARY KEY(eui)
 );
 
--- Tabla gateway
-CREATE TABLE public.gateway (
+-- Tabla device
+CREATE TABLE public.device (
   eui varchar(16),
   name varchar(50),
   latitude  double precision,
