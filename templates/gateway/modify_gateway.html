@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}Modify {{gat_.name}}{% endblock %}
+{% block page_title %}{% endblock %}
+{% block content %}
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.js"></script>
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.css" rel="stylesheet" />
+  <div class="container">
+    <h1>MODIFY {{gat_.name}}</h1>
+    <form method="post" name="mod" id="mod">
+      <div class="row">
+        <div class="col-md-6 modify-form-background">
+          <div class="form-group">
+            <label for="desc" class="font-25">Descripción</label>
+            <textarea  type="text" class="form-control" name="new_desc" placeholder="{{gat_.description}}" size="250">{{gat_.description}}</textarea>
+          </div>
+          <small class="form-text text-muted">Max 250 caracters.</small>
+          <div class="form-group">
+            <label for="altitude" class="font-25">Altitude</label>
+            <input type="number" class="form-control" name="new_altitude" value="{{gat_.altitude}}"></input>
+          </div>
+        </div>        
+        <div class="col-md-6">
+          <div id="map" class="map"></div>
+          <input type="hidden" id="latitude" name="latitude" value="{{gat_.longitude}}">
+          <input type="hidden" id="longitude" name="longitude" value="{{gat_.latitude}}">
+          <input type="hidden" id="new_latitude" name="new_latitude">
+          <input type="hidden" id="new_longitude" name="new_longitude">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12">
+          <button type="submit" class="btn btn-success" formaction="{{ url_for('modify_gateway', eui=gat_.eui) }}">
+            Submit
+          </button>
+          <a type="button" class="btn btn-secondary" href="{{ url_for('gateway', eui=gat_.eui) }}">
+            Back
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- MAPBOX MAP-->
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYWx2YXJvcmciLCJhIjoiY2xpdW1iNGExMDE3YzNxcWgyd3ZkMGQ4aiJ9.AgQTU3uOI4KM4jHn1kN9cw';
+    
+    // Old position
+    var latitude = document.getElementById('latitude').value;
+    var longitude = document.getElementById('longitude').value;
+
+    // Initialize the map
+    var map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: [{{gat_.longitude}}, {{gat_.latitude}}],
+      zoom: 17
+    });
+    // Add markers for device locations
+    var old_position = new mapboxgl.Marker()
+      .setLngLat([{{gat_.longitude}}, {{gat_.latitude}}])
+      .addTo(map);
+
+    var seleccion = new mapboxgl.Marker({ color: '#FF0000' });
+    map.on('click', function(e) {
+      var coordinates = e.lngLat;
+      seleccion.remove();
+      seleccion.setLngLat(coordinates)
+                .addTo(map);
+
+      // Update form inputs with coordinates
+      document.getElementById('new_latitude').value = coordinates.lat;
+      document.getElementById('new_longitude').value = coordinates.lng;
+      
+    });
+    // Llama al submit del form
+    function submitForm() {
+      document.getElementById('mod').submit();
+    }
+
+  </script>
+  <!-- Pasarle los datos recibidos al formulario -->
+  <script>
+    document.getElementById('mod').addEventListener('submit', function(e) {
+      e.preventDefault(); // Prevent default form submission
+      if (document.getElementById('new_latitude').value == '' ||
+          document.getElementById('new_longitude').value == '') {
+        document.getElementById('new_latitude').value = {{gat_.latitude}};
+        document.getElementById('new_longitude').value = {{gat_.longitude}};
+      }
+      submitForm(); // Call submitForm() function to submit the form
+    });
+  </script>
+{% endblock %}
