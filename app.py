@@ -303,9 +303,7 @@ def devicegraph(dev):
       fig.update_layout(showlegend=True)
       graphs.append(json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder))
     header = dev
-    description = """
-    Datos recibidos por el dispositivo con EUI: {}
-    """.format(dev)
+    description = "Datos recibidos por el dispositivo con EUI: {}".format(dev)
 
     cur.close()
     conn.close()
@@ -318,9 +316,7 @@ def devicegraph(dev):
 
     cur.close()
     conn.close()
-    aviso = """
-    No se han recibido datos en este intervalo de tiempo
-    """
+    aviso = "No se han recibido datos en este intervalo de tiempo"
     return render_template('device/graph.html', graphJSON=[],
                           aviso_ = aviso,
                           uplink_ = uplink, dev_info_ = dev_data)

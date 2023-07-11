@@ -157,18 +157,16 @@ def check_limits(msg):
           cur.execute('INSERT INTO alerts '
                       '(eui, descrip, param, value, date) VALUES '
                       "('{}','{}', '{}', {}, '{}');".format(msg["devEUI"], desc, param, value, datetime.datetime.now()))
-          body =  "Alert " + msg["deviceName"] + " at " + datetime.datetime.now().strftime('%d de %B de %Y a las %H:%M:%S')
-          body += "\nRecibed value " + param + " = " + value + " exceeds min = " + limit["min"]
+          body = "Alert {} at {}".format(msg["deviceName"], datetime.datetime.now().strftime('%d de %B de %Y a las %H:%M:%S'))
+          body += "\nRecibed value {} = {} exceeds min = {}".format(param, value, limit["min"])
           send_alert(body)
         if (decimal.Decimal(value) > limit["max"]):
           desc = 'Valor del parámetro {} = {} superior al maximo {}'.format(param, value, limit["max"])
           cur.execute('INSERT INTO alerts '
                       '(eui, descrip, param, value, date) VALUES '
                       "('{}','{}', '{}', {}, '{}');".format(msg["devEUI"], desc, param, value, datetime.datetime.now()))
-          body = """
-          Alert {} at {}
-          Recibed value {} = {} exceeds max = {}
-          """.format(msg["deviceName"], datetime.datetime.now().strftime('%d de %B de %Y a las %H:%M:%S'), param, value, limit["max"])
+          body = "Alert {} at {}".format(msg["deviceName"], datetime.datetime.now().strftime('%d de %B de %Y a las %H:%M:%S'))
+          body += "\nRecibed value {} = {} exceeds max = {}".format(param, value, limit["max"])
           send_alert(body)
 
   conn.commit()
@@ -223,13 +221,12 @@ client.subscribe("application/2/#")
 # Listen indefinitely waiting for an interruption
 client.loop_start()
 
-# For debugging
-# while True:
-#   print("Listening for data ", end= "")
-#   sys.stdout.flush()
-#   for i in range(10):
-#     time.sleep(1)
-#     print(". ", end= "")
-#     sys.stdout.flush()
-#   time.sleep(1)
-#   print("")
+while True:
+  print("Listening for data ", end= "")
+  sys.stdout.flush()
+  for i in range(10):
+    time.sleep(1)
+    print(". ", end= "")
+    sys.stdout.flush()
+  time.sleep(1)
+  print("")
