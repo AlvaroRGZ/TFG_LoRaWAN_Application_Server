@@ -23,17 +23,6 @@ SET default_tablespace = '';
 
 GRANT ALL PRIVILEGES ON DATABASE app TO admin;
 
--- Tabla device
-CREATE TABLE public.device (
-  eui varchar(16),
-  name varchar(50),
-  latitude  double precision,
-  longitude double precision,
-  altitude integer,
-
-  PRIMARY KEY(eui)
-);
-
 -- Tabla gateway
 CREATE TABLE public.gateway (
   eui varchar(16),
@@ -45,7 +34,18 @@ CREATE TABLE public.gateway (
   PRIMARY KEY(eui)
 );
 
--- Tabla gateway
+-- Tabla device
+CREATE TABLE public.device (
+  eui varchar(16),
+  name varchar(50),
+  latitude  double precision,
+  longitude double precision,
+  altitude integer,
+
+  PRIMARY KEY(eui)
+);
+
+-- Tabla data
 CREATE TABLE public.data (
   eui varchar(16),
   rec_date timestamp,
@@ -54,9 +54,9 @@ CREATE TABLE public.data (
 
   PRIMARY KEY(eui, rec_date),
   CONSTRAINT fk_eui
-  FOREIGN KEY(eui)
-  REFERENCES device(eui)
-  ON DELETE CASCADE
+    FOREIGN KEY(eui)
+    REFERENCES device(eui)
+    ON DELETE CASCADE
 );
 
 -- Tabla device_limits
@@ -70,7 +70,56 @@ CREATE TABLE public.device_limits (
 
   PRIMARY KEY(eui, parameter),
   CONSTRAINT fk_eui
-  FOREIGN KEY(eui)
-  REFERENCES device(eui)
-  ON DELETE CASCADE
+    FOREIGN KEY(eui)
+    REFERENCES device(eui)
+    ON DELETE CASCADE
+);
+
+-- Tabla gateway_range
+-- Almacena los dispositivos que tiene al alcance
+-- cada gateway
+CREATE TABLE public.gateway_range (
+  gat_eui varchar(16),
+  dev_eui varchar(16),
+
+  PRIMARY KEY(gat_eui, dev_eui),
+  CONSTRAINT fk_gat_eui
+    FOREIGN KEY(gat_eui)
+    REFERENCES gateway(eui)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_dev_eui
+    FOREIGN KEY(dev_eui)
+    REFERENCES device(eui)
+    ON DELETE CASCADE
+);
+
+-- Tabla alerts
+-- Almacena los registros que han traspasado los
+-- limites impuestos y cuando se recibieron
+CREATE TABLE public.alerts (
+  eui varchar(16),
+  descrip varchar(250),
+  param varchar(80),
+  value numeric,
+  date timestamp,
+
+  CONSTRAINT fk_eui
+    FOREIGN KEY(eui)
+    REFERENCES device(eui)
+    ON DELETE CASCADE
+);
+
+-- Tabla web_preferences
+-- Almacena las preferencias para mostrar los datos
+CREATE TABLE public.web_preferences (
+  eui varchar(16),
+  begin_time timestamp,
+  end_time timestamp,
+  nrows numeric,
+
+  PRIMARY KEY(eui),
+  CONSTRAINT fk_eui
+    FOREIGN KEY(eui)
+    REFERENCES device(eui)
+    ON DELETE CASCADE
 );

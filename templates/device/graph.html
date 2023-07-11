@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% block title %}Graph {{ dev_info_.name }}{% endblock %}
+{% block page_title %}{% endblock %}
+
+{% set headers = ['eui', 'name', 'altitude'] %}
+{% block content %}
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.css" rel="stylesheet" />
+<body>
+  <div class="custom-container">
+    <div class="row">
+      <div class="col-sm-12 text-center">
+        <h3>{{ dev_info_.name }}</h3>
+        <h5>{{ dev_info_.eui }}</h5>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-12 col-md-3" style="text-align: center;">
+        <h6>Ubicación</h6>
+        <div style="display: flex; justify-content: center; align-items: center;">
+          <div id="map" class="device-map"></div>
+        </div>
+        <h4>Descripción</h4>
+        <p class="font-25">
+          {% if dev_info_["description"] == ""  or dev_info_["description"] == None %}
+            No description given.
+          {% else %}
+            {{ dev_info_["description"] }}
+          {% endif %}
+        </p>
+      </div>
+      <div class="col-sm-12 col-md-7">
+        <div class="row">
+          <p class="font-25"> <b>Last uplink at </b> {{ uplink_[0] }}</p>
+        </div>
+        <div class="row">
+          {% for head, record in uplink_[1].items() %}
+          <div class="col-sm-3 col-md-3">
+            <div class="card param-card">
+              <div class="card-body">
+                <p class="card-text"><b>{{ head }}</b></p>
+                <p class="param-card-value">{{ record }}</p>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-sm-2 col-md-2" style="text-align: right;">
+        <a type="button" href="{{ url_for('modify_device', eui=dev_info_['eui']) }}" class="btn btn-info" style="width: 100%;">
+          Modify data
+        </a>
+        <br>
+        <br>
+        <a type="button" href="{{ url_for('device', dev=dev_info_['eui']) }}" class="btn btn-info" style="width: 100%;">
+          View raw data
+        </a>
+        <br>
+        <br>
+        <a type="button" href="{{ url_for('limits', eui=dev_info_['eui']) }}" class="btn btn-info" style="width: 100%;">
+          Set limits
+        </a>
+      </div>
+    </div>
+      <div class="row text-center">
+        <div class="col-sm-12">
+          <h4>Seleccionar Rango de Fechas</h4>
+          <form id="date-form" class="form-inline d-flex justify-content-center" method="POST" action="{{ url_for('devicegraph', dev = dev_info_.eui) }}">
+            <div class="form-group mx-sm-3 mb-2">
+              <label for="start-date" class="sr-only">Fecha de inicio</label>
+              <input type="date" class="form-control text-center" id="start-date" name="start_date" required>
+            </div>
+            <div class="form-group mx-sm-3 mb-2">
+              <label for="end-date" class="sr-only">Fecha de fin</label>
+              <input type="date" class="form-control text-center" id="end-date" name="end_date" required>
+            </div>
+            <div class="form-group mx-sm-3 mb-2">
+              <button type="submit" class="btn btn-primary">Generar Gráficas</button>
+            </div>
+          </form>
+        </div>
+        <div class="col-sm-12 alert alert-danger" role="alert">
+          La fecha de inicio es mayor a la de final.
+        </div>
+        {% if aviso_ %}
+          <div class="col-sm-12 text-center font-25" style="color: red;">
+            {{ aviso_ }}
+          </div>
+        {% endif %}
+      </div>
+    <div class="row">
+      {% for graph in graphJSON %}
+      <div class="col-sm-12 col-lg-6">
+        <div id="chart{{ loop.index }}" class="chart"></div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</body>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script type="text/javascript">
+  
+  {% for graph in graphJSON %}
+    var plots{{ loop.index }} = {{ graph | safe }};
+    Plotly.plot('chart{{ loop.index }}', plots{{ loop.index }}, {});
+  {% endfor %}
+
+  // Resize the graphs when the window size changes
+  window.addEventListener('resize', function() {
+    {% for graph in graphJSON %}
+      Plotly.Plots.resize('chart{{ loop.index }}');
+    {% endfor %}
+  });
+
+  // Get all the record cells
+  var recordCells = document.getElementsByClassName('record-cell');
+
+  // Find the maximum width among all the cells
+  var maxWidth = 0;
+  var largestCellIndex = 0;
+  for (var i = 0; i < recordCells.length; i++) {
+    var cellWidth = recordCells[i].offsetWidth;
+    if (cellWidth > maxWidth) {
+      maxWidth = cellWidth;
+      largestCellIndex = i;
+    }
+  }
+
+  // Set the width of all record cells to the width of the largest cell
+  for (var i = 0; i < recordCells.length; i++) {
+    recordCells[i].style.width = maxWidth + 'px';
+  }
+
+  // Add the "record-cell-largest" class to the largest cell
+  recordCells[largestCellIndex].classList.add('record-cell-largest');
+
+</script>
+
+<!-- MAPBOX MAP-->
+<script>
+  mapboxgl.accessToken = 'pk.eyJ1IjoiYWx2YXJvcmciLCJhIjoiY2xpdW1iNGExMDE3YzNxcWgyd3ZkMGQ4aiJ9.AgQTU3uOI4KM4jHn1kN9cw';
+
+  // Initialize the map
+  var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v11',
+    center: [{{dev_info_["longitude"]}}, {{dev_info_["latitude"]}}],
+    zoom: 15
+  });
+
+  var marker = new mapboxgl.Marker()
+    .setLngLat([{{dev_info_["longitude"]}}, {{dev_info_["latitude"]}}])
+    .setPopup(new mapboxgl.Popup().setHTML('<b> Longitude: </b>' + {{dev_info_["longitude"]}} + '<br>' +
+                                           '<b>Latitude: </b>' + {{dev_info_["latitude"]}} + '<br>' +
+                                           '<b>Altitude: </b>' + {{dev_info_["altitude"]}}))
+    .addTo(map);
+
+</script>
+
+<script>
+  // Validar las fechas antes de enviar el formulario
+  var form = document.getElementById('date-form');
+  form.addEventListener('submit', function(event) {
+    var startDate = document.getElementById('start-date').value;
+    var endDate = document.getElementById('end-date').value;
+    if (startDate > endDate) {
+      var avisoDiv = document.querySelector('.alert');
+      avisoDiv.style.display = 'block';
+      event.preventDefault(); // Evitar que el formulario se envíe
+    }
+  });
+</script>
+
+{% endblock %}
