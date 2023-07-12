@@ -1,7 +1,4 @@
--- TFG
--- Realizado por:
--- Álvaro Rodríguez Gómez      (alu0101362953)
--- 
+-- Realizado por: Álvaro Rodríguez Gómez (alu0101362953@ull.edu.es)
 
 --
 -- Creación de la base de datos
@@ -13,7 +10,7 @@ ALTER DATABASE app OWNER TO admin;
 --
 -- Realizamos la conexión a la base de datos
 -- 
--- \connect parking_db user adminpark identified BY parksswd;
+
 \connect app
 SET default_tablespace = '';
 
@@ -24,6 +21,7 @@ SET default_tablespace = '';
 GRANT ALL PRIVILEGES ON DATABASE app TO admin;
 
 -- Tabla gateway
+-- Almacena los datos de los gateways
 CREATE TABLE public.gateway (
   eui varchar(16),
   name varchar(50),
@@ -35,6 +33,7 @@ CREATE TABLE public.gateway (
 );
 
 -- Tabla device
+-- Almacena los datos de los dispositivos
 CREATE TABLE public.device (
   eui varchar(16),
   name varchar(50),
@@ -46,6 +45,7 @@ CREATE TABLE public.device (
 );
 
 -- Tabla data
+-- Almacena los registros de los dispositivos con la fecha de recepción
 CREATE TABLE public.data (
   eui varchar(16),
   rec_date timestamp,

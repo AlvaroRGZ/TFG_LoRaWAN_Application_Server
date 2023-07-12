@@ -16,13 +16,6 @@ import datetime
 
 # Para mostrar mapas
 import plotly.graph_objects as go
-mapbox_access_token = open(".mapbox_token").read()
-
-import requests
-
-# Definimos la cola en la que se almacenaran los datos recibidos
-import queue as queue
-q=queue.Queue()
 
 app = Flask(__name__)
 
@@ -76,7 +69,7 @@ def device(dev):
               'WHERE eui = \'{}\''.format(dev))
   dev_info = cur.fetchall()
 
-  # Get last 10 device uplinks
+  # Get device uplinks
   cur.execute('SELECT eui, rec_date, obj '
               'FROM data '
               "WHERE eui = \'{}\'".format(dev) + ' ORDER BY rec_date DESC;')
@@ -125,6 +118,7 @@ def gateway(eui):
                          gat_info_ = gat_info[0],
                          devs_ = devs)
 
+# [Deprecated] Now the app registers the devices automatically
 @app.route('/register_device', methods=('GET', 'POST'))
 def register():
   if request.method == 'POST':
@@ -169,46 +163,44 @@ def serialize_datetime(obj):
     return obj.isoformat()
   raise TypeError("Type not serializable")
 
-# Muestra grafico de interes del dispositivo deseado
+# Show the graph screen for that device and more information
 @app.route('/device/<dev>/graph', methods=['GET', 'POST'])
 def devicegraph(dev):
   if request.method == 'POST':
     start_date = request.form.get('start_date')
     end_date = request.form.get('end_date')
 
-    # Realizar la llamada a la base de datos para almacenar las fechas
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # Verificar si existe un registro previo para el dispositivo
+    # Check if exists a previous range
     cur.execute('SELECT COUNT(*) FROM web_preferences WHERE eui = %s', (dev,))
     existing_records = cur.fetchone()[0]
 
     if existing_records > 0:
-        # Actualizar el registro existente
+        # Update actual range
         cur.execute('UPDATE web_preferences SET begin_time = %s, end_time = %s WHERE eui = %s', (start_date, end_date, dev))
     else:
-        # Insertar un nuevo registro
+        # Upload a new range
         cur.execute('INSERT INTO web_preferences (eui, begin_time, end_time) VALUES (%s, %s, %s)', (dev, start_date, end_date))
 
     conn.commit()
     cur.close()
     conn.close()
 
-    # Redirigir al usuario a la página de gráficas
     return redirect(url_for('devicegraph', dev=dev))
 
   conn = get_db_connection()
   cur = conn.cursor()
 
-  # Obtener los límites de tiempo
+  # Get time range
   cur.execute('SELECT begin_time, end_time '
               'FROM web_preferences '
               "WHERE eui = \'{}\'".format(dev))
   dates = cur.fetchall()
   data = []
   if len(dates) > 0:
-    # Obtener registered data from device to plot
+    # Get registered data from device in that time range
     cur.execute('SELECT rec_date, obj '
                 'FROM data '
                 'WHERE eui = \'{}\' AND '
@@ -218,41 +210,40 @@ def devicegraph(dev):
                                                 dates[0][1]))
     data = cur.fetchall()
   else:
-    # Obtener registered data from device to plot
+    # Get all the data
     cur.execute('SELECT rec_date, obj '
                 'FROM data '
                 'WHERE eui = \'{}\' '
                 'ORDER BY rec_date DESC;'.format(dev))
     data = cur.fetchall()
 
-  # Obtener registered data from device to plot
+  # Get last device uplink
   cur.execute('SELECT rec_date, obj '
               'FROM data '
               'WHERE eui = \'{}\' '
               'ORDER BY rec_date DESC LIMIT 1;'.format(dev))
   last_uplink = cur.fetchall()
 
-  # Obtener device information
+  # Get device information
   cur.execute('SELECT * '
               'FROM device '
               "WHERE eui = \'{}\'".format(dev))
   device_data = cur.fetchall()
-  print(device_data)
+
   dev_data = {
-      "eui": device_data[0][0],
-      "name": device_data[0][1],
-      "latitude": device_data[0][2],
-      "longitude": device_data[0][3],
-      "altitude": device_data[0][4],
-      "description": device_data[0][5]
+    "eui": device_data[0][0],
+    "name": device_data[0][1],
+    "latitude": device_data[0][2],
+    "longitude": device_data[0][3],
+    "altitude": device_data[0][4],
+    "description": device_data[0][5]
   }
   uplink = []
-  if (len(last_uplink) > 0): 
-    # Obtener last uplink data
+  if (len(last_uplink) > 0):
     uplink = last_uplink[0]
     
   if (len(data) > 0):
-    # Formatear la fecha en un formato sencillo y legible
+    # format the date properly
     fecha_formateada = data[0][0].strftime('%d de %B de %Y, %H:%M:%S')
 
     ## Convert Query Result in dataframe
@@ -268,17 +259,15 @@ def devicegraph(dev):
         r[1]["rec_date"] = pd.to_datetime(r[0])  # Convertir la fecha a Timestamp
         dict2.append(r[1])
 
-    # Convertir el payload en un dataframe
     normalized = pd.json_normalize(dict2)
     df = pd.DataFrame(normalized)
 
     graphs = []
+    # Build every graph
     for variable in yData:
       df[variable] = df[variable].astype(float)
-      # Seleccion y construye el grafico
       fig = px.line(df, x = 'rec_date', y = variable, color_discrete_sequence=px.colors.qualitative.Plotly, markers=True)
       # Show the limits if they exists
-      # Obtener el limite min y max del dispositivo
       cur.execute('SELECT min, max '
                   'FROM device_limits '
                   "WHERE eui = \'{}\' AND parameter = \'{}\'".format(dev, variable))
@@ -302,8 +291,8 @@ def devicegraph(dev):
 
       fig.update_layout(showlegend=True)
       graphs.append(json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder))
-    header = dev
-    description = "Datos recibidos por el dispositivo con EUI: {}".format(dev)
+
+    description = "Received data from device with EUI: {}".format(dev)
 
     cur.close()
     conn.close()
@@ -316,7 +305,7 @@ def devicegraph(dev):
 
     cur.close()
     conn.close()
-    aviso = "No se han recibido datos en este intervalo de tiempo"
+    aviso = "No data received in that period of time"
     return render_template('device/graph.html', graphJSON=[],
                           aviso_ = aviso,
                           uplink_ = uplink, dev_info_ = dev_data)
@@ -475,8 +464,6 @@ def limits(eui):
       name = request.form.get(f"{p}_name")
       mind = request.form.get(f"{p}_new_min")
       maxd = request.form.get(f"{p}_new_max")
-      print(name, mind, maxd)
-      print("------------------------")
 
       if mind or maxd:
         # Check if the record already exists
@@ -504,11 +491,9 @@ def alerts():
   conn = get_db_connection()
   cur = conn.cursor()
 
-  current_date = datetime.date.today()  # Obtener la fecha actual (solo día, mes y año)
-
-  # Opcionalmente, puedes usar strftime para obtener una cadena con el formato deseado
+  current_date = datetime.date.today()  # Get date as day-month-year
   current_date_str = current_date.strftime("%Y-%m-%d")
-  print(current_date_str)
+  
   # Get alerts received on the current day
   cur.execute('SELECT name, descrip, param, value, date '
               'FROM alerts '

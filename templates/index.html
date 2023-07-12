@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Inicio{% endblock %}
+{% block title %}Index{% endblock %}
 {% block page_title %}{% endblock %}
 
 {% block content %}
@@ -15,7 +15,7 @@
           </div>
         {%endfor%}
       {% else %}
-        <p class="errordevice">No hay gateways registrados</p>
+        <p class="errordevice">No gateways registered yet</p>
       {% endif %}
     </div>
     <div class="col-4">
@@ -32,7 +32,7 @@
       </div>
       {% endfor %}
       {% else %}
-      <p class="errordevice">No hay dispositivos registrados</p>
+      <p class="errordevice">No devices registered yet</p>
       {% endif %}
     </div>
   </div>

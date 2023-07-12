@@ -2,7 +2,6 @@
 {% block title %}Graph {{ dev_info_.name }}{% endblock %}
 {% block page_title %}{% endblock %}
 
-{% set headers = ['eui', 'name', 'altitude'] %}
 {% block content %}
 <script src="https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.js"></script>
 <link href="https://api.mapbox.com/mapbox-gl-js/v2.5.1/mapbox-gl.css" rel="stylesheet" />
@@ -64,23 +63,23 @@
     </div>
       <div class="row text-center">
         <div class="col-sm-12">
-          <h4>Seleccionar Rango de Fechas</h4>
+          <h4>Set period of time</h4>
           <form id="date-form" class="form-inline d-flex justify-content-center" method="POST" action="{{ url_for('devicegraph', dev = dev_info_.eui) }}">
             <div class="form-group mx-sm-3 mb-2">
-              <label for="start-date" class="sr-only">Fecha de inicio</label>
+              <label for="start-date" class="sr-only">Start date</label>
               <input type="date" class="form-control text-center" id="start-date" name="start_date" required>
             </div>
             <div class="form-group mx-sm-3 mb-2">
-              <label for="end-date" class="sr-only">Fecha de fin</label>
+              <label for="end-date" class="sr-only">End date</label>
               <input type="date" class="form-control text-center" id="end-date" name="end_date" required>
             </div>
             <div class="form-group mx-sm-3 mb-2">
-              <button type="submit" class="btn btn-primary">Generar Gráficas</button>
+              <button type="submit" class="btn btn-primary">Build graphs</button>
             </div>
           </form>
         </div>
         <div class="col-sm-12 alert alert-danger" role="alert">
-          La fecha de inicio es mayor a la de final.
+          Start date is greater than end date
         </div>
         {% if aviso_ %}
           <div class="col-sm-12 text-center font-25" style="color: red;">

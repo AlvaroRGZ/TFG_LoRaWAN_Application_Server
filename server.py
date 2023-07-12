@@ -28,7 +28,6 @@ def on_message(client, userdata, message):
   msg = json.loads(message)
 
   if (len(msg) > UPLINK_MESSAGE_SIZE):
-    look_for_new_gateways(msg)
 
     eui = msg["devEUI"]
     if search_eui(eui) == None:
@@ -39,6 +38,8 @@ def on_message(client, userdata, message):
     else:
       save_data(msg)
       check_limits(msg)
+    
+    look_for_new_gateways(msg)
 
 def search_eui(eui):
   """
@@ -94,8 +95,7 @@ def save_data(msg):
   conn.commit()
   cur.close()
   conn.close()
-  print("")
-  print("[OK] Registered new uplink. EUI: {}".format(eui))
+  print("\n[OK] Registered new uplink. EUI: {}".format(eui))
 
 def look_for_new_gateways(msg):
   """
